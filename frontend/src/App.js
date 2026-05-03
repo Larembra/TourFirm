@@ -10,6 +10,8 @@ import ClientsPage from './pages/ClientsPage';
 import ToursPage from './pages/ToursPage';
 import TourDetailPage from './pages/TourDetailPage';
 import SalesPage from './pages/SalesPage';
+import ManagersPage from './pages/ManagersPage';
+import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
 
 const ProtectedRoute = ({ children }) => {
@@ -90,6 +92,26 @@ const AppShell = () => {
           <Route
             path="/tours/:id"
             element={<ProtectedRoute><TourDetailPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/managers"
+            element={
+              <ProtectedRoute>
+                <ManagersPage
+                  managers={routerState.managers}
+                  onAddManager={routerState.addManager}
+                  onRemoveManager={routerState.removeManager}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <ReportsPage tours={routerState.tours} sales={routerState.sales} clients={routerState.clients} />
+              </ProtectedRoute>
+            }
           />
           <Route path="/sales" element={<ProtectedRoute><SalesPage sales={routerState.sales} tours={routerState.tours} clients={routerState.clients} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage currentUser={app.currentUser} managers={routerState.managers} clients={routerState.clients} tours={routerState.tours} sales={routerState.sales} onAddManager={routerState.addManager} onRemoveManager={routerState.removeManager} /></ProtectedRoute>} />

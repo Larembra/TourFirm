@@ -30,10 +30,6 @@ const SalesPage = ({ sales, tours, clients }) => {
             <span>Сумма выручки</span>
             <strong>{formatCurrency(summary.revenue)}</strong>
           </article>
-          <article className="stat-tile tone-warning">
-            <span>Потери на скидках</span>
-            <strong>{formatCurrency(summary.discountLoss)}</strong>
-          </article>
           <article className="stat-tile tone-success">
             <span>Количество продаж</span>
             <strong>{summary.totalOrders}</strong>
@@ -87,7 +83,6 @@ const SalesPage = ({ sales, tours, clients }) => {
           <h4>Дополнительные показатели</h4>
           <ul className="bullet-list">
             <li>Всего штук: {summary.totalQuantity}</li>
-            <li>Потери фирмы из-за скидок: {formatCurrency(summary.discountLoss)}</li>
             <li>Приблизительная выручка после скидок: {formatCurrency(summary.revenue)}</li>
           </ul>
         </div>

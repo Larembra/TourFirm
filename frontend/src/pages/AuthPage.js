@@ -20,9 +20,10 @@ const AuthPage = ({ onLogin }) => {
           <h2>Авторизация</h2>
           <p/>
           <form className="auth-form" onSubmit={submit}>
+
             <div className="auth-row">
-              <label htmlFor="login" className="field-label">Логин</label>
-              <input id="login" name="login" value={form.login} onChange={handleChange} placeholder="Любой логин" />
+              <label htmlFor="email" className="field-label">Email</label>
+              <input id="email" name="email" value={form.email} onChange={handleChange} placeholder="Любой email" />
             </div>
 
             <div className="auth-row">
@@ -37,15 +38,9 @@ const AuthPage = ({ onLogin }) => {
               />
             </div>
 
-            <div className="auth-row">
-              <label htmlFor="name" className="field-label">Имя</label>
-              <input id="name" name="name" value={form.name} onChange={handleChange} placeholder="Любое имя" />
-            </div>
 
-            <div className="auth-row">
-              <label htmlFor="email" className="field-label">Email</label>
-              <input id="email" name="email" value={form.email} onChange={handleChange} placeholder="Любой email" />
-            </div>
+
+
 
             <div className="form-actions auth-actions">
               <button type="submit" className="primary-button wide-button">
