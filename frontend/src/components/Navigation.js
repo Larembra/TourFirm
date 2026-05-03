@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 const tabs = [
   { key: 'home', label: 'Главная', authRequired: false },
@@ -31,17 +32,16 @@ const Navigation = ({ activePage, user, onNavigate, onLogout, onAuth }) => {
 
       <nav className="tabs" aria-label="Основная навигация">
         {visibleTabs.map((tab) => {
-          const isActive = activePage === tab.key;
+          const to = tab.key === 'home' ? '/' : `/${tab.key}`;
 
           return (
-            <button
+            <NavLink
               key={tab.key}
-              type="button"
-              className={`tab-button ${isActive ? 'active' : ''}`}
-              onClick={() => onNavigate(tab.key)}
+              to={to}
+              className={({ isActive }) => `tab-button ${isActive ? 'active' : ''}`}
             >
               <span>{tab.label}</span>
-            </button>
+            </NavLink>
           );
         })}
       </nav>

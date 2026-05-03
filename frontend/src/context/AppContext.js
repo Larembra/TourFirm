@@ -59,6 +59,15 @@ export const AppProvider = ({ children }) => {
     () => ({
       signInAsLeader: () => setState((current) => ({ ...current, currentUser: demoUser })),
       signOut: () => setState((current) => ({ ...current, currentUser: null })),
+      // reset demo data from initial mock (useful when mockData.js was changed)
+      resetDemoData: () =>
+        setState(() => ({
+          currentUser: null,
+          managers: initialMockData.managers,
+          clients: initialMockData.clients,
+          tours: initialMockData.tours,
+          sales: initialMockData.sales,
+        })),
       createClient: (client) =>
         setState((current) => ({
           ...current,
@@ -67,7 +76,8 @@ export const AppProvider = ({ children }) => {
             {
               id: nextId('c', current.clients),
               historyTourIds: [],
-              discountPercent: Number(client.discountPercent) || 0,
+              // discount is assigned automatically based on history; new clients start with 0
+              discountPercent: 0,
               ...client,
             },
           ],
@@ -80,11 +90,16 @@ export const AppProvider = ({ children }) => {
               ? { ...tour, assignedClientIds: [...tour.assignedClientIds, clientId] }
               : tour,
           ),
-          clients: current.clients.map((client) =>
-            client.id === clientId && !client.historyTourIds.includes(tourId)
-              ? { ...client, historyTourIds: [...client.historyTourIds, tourId] }
-              : client,
-          ),
+          clients: current.clients.map((client) => {
+            if (client.id !== clientId) return client;
+            // compute new history (avoid duplicates)
+            const newHistory = client.historyTourIds.includes(tourId)
+              ? client.historyTourIds
+              : [...client.historyTourIds, tourId];
+            // assign discount based on business rule: >=3 tours => 10%
+            const newDiscount = newHistory.length >= 3 ? 10 : 0;
+            return { ...client, historyTourIds: newHistory, discountPercent: newDiscount };
+          }),
         })),
       removeClientFromTour: (tourId, clientId) =>
         setState((current) => ({
