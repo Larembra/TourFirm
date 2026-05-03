@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate, isWithinNextDays } from '../utils/date';
@@ -8,6 +8,7 @@ const TourDetailPage = () => {
   const app = useApp();
 
   const tour = useMemo(() => app.tours.find((t) => t.id === id) ?? null, [app.tours, id]);
+  const [selectedClientName, setSelectedClientName] = useState('');
 
   if (!tour) {
     return (
@@ -18,7 +19,6 @@ const TourDetailPage = () => {
       </section>
     );
   }
-
   const tourClients = tour.assignedClientIds.map((cid) => app.clients.find((c) => c.id === cid)).filter(Boolean);
 
   return (
@@ -87,6 +87,40 @@ const TourDetailPage = () => {
               ) : (
                 <p className="empty-state">Пока никто не закреплён.</p>
               )}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                <input
+                  list="clients-list-detail"
+                  placeholder="ФИО клиента"
+                  value={selectedClientName}
+                  onChange={(e) => setSelectedClientName(e.target.value)}
+                  style={{ flex: 1, padding: '8px 10px', borderRadius: 10, border: '1px solid #cbd5e1' }}
+                />
+                <datalist id="clients-list-detail">
+                  {app.clients.map((c) => (
+                    <option key={c.id} value={c.name} />
+                  ))}
+                </datalist>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => {
+                    const client = app.clients.find((c) => c.name === selectedClientName);
+                    if (!client) {
+                      window.alert('Выберите клиента из списка');
+                      return;
+                    }
+                    if (tour.assignedClientIds.includes(client.id)) {
+                      window.alert('Клиент уже добавлен в эту путёвку');
+                      return;
+                    }
+                    app.addClientToTour(tour.id, client.id);
+                    setSelectedClientName('');
+                  }}
+                >
+                  Добавить к путёвке
+                </button>
+              </div>
             </div>
           </div>
         </div>

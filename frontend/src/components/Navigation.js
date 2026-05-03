@@ -6,6 +6,8 @@ const tabs = [
   { key: 'clients', label: 'Сведения о клиентах', authRequired: true },
   { key: 'tours', label: 'Сведения о путевках', authRequired: true },
   { key: 'sales', label: 'Сведения о продаже путевок', authRequired: true },
+  { key: 'managers', label: 'Управление менеджерами', authRequired: true },
+  { key: 'reports', label: 'Отчёты', authRequired: true },
   { key: 'profile', label: 'Личный кабинет', authRequired: true },
 ];
 
