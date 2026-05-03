@@ -17,37 +17,39 @@ const AuthPage = ({ onLogin }) => {
       <section className="page-shell auth-layout centered-page">
         <article className="panel centered-card">
           <p className="eyebrow">Вход в систему</p>
-          <h2>Авторизация и регистрация</h2>
-
+          <h2>Авторизация</h2>
+          <p/>
           <form className="auth-form" onSubmit={submit}>
-            <label>
-              Логин
-              <input name="login" value={form.login} onChange={handleChange} placeholder="Любой логин" />
-            </label>
-            <label>
-              Пароль
+            <div className="auth-row">
+              <label htmlFor="login" className="field-label">Логин</label>
+              <input id="login" name="login" value={form.login} onChange={handleChange} placeholder="Любой логин" />
+            </div>
+
+            <div className="auth-row">
+              <label htmlFor="password" className="field-label">Пароль</label>
               <input
+                  id="password"
                   type="password"
                   name="password"
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Любой пароль"
               />
-            </label>
-            <label>
-              Имя
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Любое имя" />
-            </label>
-            <label>
-              Email
-              <input name="email" value={form.email} onChange={handleChange} placeholder="Любой email" />
-            </label>
-            <div className="form-actions">
-              <button type="submit" className="primary-button">
+            </div>
+
+            <div className="auth-row">
+              <label htmlFor="name" className="field-label">Имя</label>
+              <input id="name" name="name" value={form.name} onChange={handleChange} placeholder="Любое имя" />
+            </div>
+
+            <div className="auth-row">
+              <label htmlFor="email" className="field-label">Email</label>
+              <input id="email" name="email" value={form.email} onChange={handleChange} placeholder="Любой email" />
+            </div>
+
+            <div className="form-actions auth-actions">
+              <button type="submit" className="primary-button wide-button">
                 Войти
-              </button>
-              <button type="button" className="secondary-button" onClick={onLogin}>
-                Зарегистрироваться
               </button>
             </div>
           </form>
