@@ -25,9 +25,9 @@ const clients = [
     name: 'Ирина Волкова',
     city: 'Москва',
     phone: '+7 (901) 100-10-10',
-    email: 'volkova@example.com',
+    email: 'volkovaa@example.com',
     discountPercent: 10,
-    historyTourIds: ['t-1', 't-3'],
+    historyTourIds: ['t-1', 't-2', 't-3'],
   },
   {
     id: 'c-2',
