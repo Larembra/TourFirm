@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -20,7 +20,7 @@ class Client(Base):
     city = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     email = Column(String, nullable=True)
-    discount_percent = Column(Integer, default=0)
+    regular_customer = Column(Boolean, default=0)
 
 
 class Tour(Base):

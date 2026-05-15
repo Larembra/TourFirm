@@ -1,4 +1,5 @@
 from typing import Optional, List
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -27,12 +28,12 @@ class ClientBase(BaseModel):
 
 
 class ClientCreate(ClientBase):
-    discount_percent: Optional[int] = 0
+    regular_customer: Optional[bool] = False
 
 
 class ClientRead(ClientBase):
     id: int
-    discount_percent: int
+    regular_customer: bool
 
     class Config:
         orm_mode = True
@@ -72,7 +73,7 @@ class SaleCreate(SaleBase):
 
 class SaleRead(SaleBase):
     id: int
-    date: Optional[str]
+    date: Optional[datetime]
 
     class Config:
         orm_mode = True
@@ -95,6 +96,9 @@ class ServiceRead(ServiceBase):
 
 # поддержка отложенной аннотации списка ServiceRead в TourRead
 from pydantic import BaseModel as _BaseModel  # noqa: F401
+
+
+TourRead.update_forward_refs()
 
 
 
