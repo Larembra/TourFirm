@@ -34,9 +34,9 @@ const ReportsPage = ({ tours, sales, clients }) => {
         <h2>Сводка продаж и статистика</h2>
 
         <div style={{ marginTop: 12 }} className="stats-row three-up">
-          <StatTile label="Клиентов" value={formatNumber(clients.length)} hint="Всего в базе" tone="primary" />
-          <StatTile label="Путёвок" value={formatNumber(tours.length)} hint="Каталог предложений" tone="success" />
-          <StatTile label="Продаж" value={formatNumber(sales.length)} hint="Записей в журнале" tone="warning" />
+          <StatTile label="Клиентов" value={formatNumber(clients.length)} tone="primary" />
+          <StatTile label="Путёвок" value={formatNumber(tours.length)} tone="success" />
+          <StatTile label="Продаж" value={formatNumber(sales.length)} tone="warning" />
         </div>
 
         <div style={{ marginTop: 12 }} className="stats-row three-up">
@@ -49,11 +49,11 @@ const ReportsPage = ({ tours, sales, clients }) => {
           <h3>Основные показатели</h3>
           <ul className="bullet-list">
             <li>
-              Самая дорогая путёвка: {expensiveTour ? `${expensiveTour.title} (${formatCurrency(expensiveTour.price)})` : '—'}
+              Самая дорогая путёвка: {expensiveTour ? `${expensiveTour.title} (${formatCurrency(expensiveTour.price)})` : '-'}
             </li>
             <li>Путёвки с ближайшей датой отправления: {hotTours.length}</li>
             <li>
-              Путёвка с максимумом спроса: {popularTours[0] ? `${popularTours[0].title} (${popularTours[0].soldQuantity})` : '—'}
+              Путёвка с максимумом спроса: {popularTours[0] ? `${popularTours[0].title} (${popularTours[0].soldQuantity})` : '-'}
             </li>
           </ul>
         </div>
@@ -63,7 +63,7 @@ const ReportsPage = ({ tours, sales, clients }) => {
           <div className="chips-row wrap">
             {cityDistribution.map(([city, count]) => (
               <span key={city} className="chip">
-                {city} — {count}
+                {city} - {count}
               </span>
             ))}
           </div>
@@ -74,7 +74,7 @@ const ReportsPage = ({ tours, sales, clients }) => {
           <ul className="bullet-list">
             {tours.map((tour) => (
               <li key={tour.id}>
-                {tour.title} — начало {formatDate(tour.startDate)}{isWithinNextDays(tour.startDate, 5) ? ' · горящая' : ''}
+                {tour.title} - начало {formatDate(tour.startDate)}{isWithinNextDays(tour.startDate, 5) ? ' · горящая' : ''}
               </li>
             ))}
           </ul>

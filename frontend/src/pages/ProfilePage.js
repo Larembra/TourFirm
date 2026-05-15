@@ -12,15 +12,15 @@ const ProfilePage = ({ currentUser }) => {
           <h2>{currentUser?.name ?? 'Гость'}</h2>
           <div style={{ marginTop: 8 }}>
             <div style={{ color: '#64748b' }}>Роль</div>
-            <strong>{currentUser?.position ?? currentUser?.role ?? '—'}</strong>
+            <strong>{currentUser?.position ?? currentUser?.role ?? '-'}</strong>
           </div>
           <div style={{ marginTop: 8 }}>
             <div style={{ color: '#64748b' }}>Email</div>
-            <strong>{currentUser?.email ?? '—'}</strong>
+            <strong>{currentUser?.email ?? '-'}</strong>
           </div>
           <div style={{ marginTop: 8 }}>
             <div style={{ color: '#64748b' }}>Телефон</div>
-            <strong>{currentUser?.phone ?? '—'}</strong>
+            <strong>{currentUser?.phone ?? '-'}</strong>
           </div>
         </div>
       </article>
