@@ -1,4 +1,4 @@
-"""Backend package"""
 
-from .main import app  # expose app for uvicorn
+
+from .main import app
 
