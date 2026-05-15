@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, SessionLocal
+from sqlalchemy import inspect, text
 from . import models
 from .routers import router as api_router
 
@@ -25,9 +26,9 @@ def seed_data():
 
         if not db.query(models.Client).first():
             clients = [
-                models.Client(name='Пётр Смирнов', city='Москва', phone='+79001234567', email='petr@example.com', discount_percent=5),
-                models.Client(name='Ольга Кузнецова', city='Санкт-Петербург', phone='+79007654321', email='olga@example.com', discount_percent=10),
-                models.Client(name='Николай Орлов', city='Казань', phone='+79009876543', email='nikolay@example.com', discount_percent=0),
+                models.Client(name='Пётр Смирнов', city='Москва', phone='+79001234567', email='petr@example.com', regular_customer=False),
+                models.Client(name='Ольга Кузнецова', city='Санкт-Петербург', phone='+79007654321', email='olga@example.com', regular_customer=False),
+                models.Client(name='Николай Орлов', city='Казань', phone='+79009876543', email='nikolay@example.com', regular_customer=False),
             ]
             db.add_all(clients)
 
@@ -59,6 +60,22 @@ def seed_data():
         db.close()
 
 
+def migrate_clients_column():
+    inspector = inspect(engine)
+    try:
+        cols = [c['name'] for c in inspector.get_columns('clients')]
+    except Exception:
+        return
+    if 'regular_customer' in cols:
+        return
+    with engine.begin() as conn:
+        if 'regular_customer' not in cols:
+            conn.execute(text('ALTER TABLE clients ADD COLUMN regular_customer BOOLEAN DEFAULT false'))
+        if 'discount_percent' in cols:
+            conn.execute(text('UPDATE clients SET regular_customer = (discount_percent > 0)'))
+            conn.execute(text('ALTER TABLE clients DROP COLUMN discount_percent'))
+
+
 app = FastAPI(title='Tourfirm API')
 
 app.add_middleware(
@@ -74,6 +91,7 @@ app.add_middleware(
 def on_startup():
 
     try:
+        migrate_clients_column()
         seed_data()
     except Exception:
 

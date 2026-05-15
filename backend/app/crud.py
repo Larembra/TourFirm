@@ -46,7 +46,7 @@ def create_client(db: Session, client: schemas.ClientCreate):
         city=client.city,
         phone=client.phone,
         email=client.email,
-        discount_percent=client.discount_percent or 0,
+        regular_customer=client.regular_customer or False,
     )
     db.add(db_obj)
     db.commit()
