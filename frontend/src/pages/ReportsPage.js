@@ -1,7 +1,41 @@
 import React, { useMemo } from 'react';
-import StatTile from '../components/StatTile';
+// StatTile not used here anymore; cards rendered inline
 import { formatCurrency, formatDate, isWithinNextDays, formatNumber } from '../utils/date';
 import { getHotTours, getMostExpensiveTour, getPopularTours, getSalesSummary } from '../utils/analytics';
+
+// inline sparkline used by reports (moved from ProfilePage)
+const Sparkline = ({ data = [], color = '#2563eb', height = 36 }) => {
+  if (!data || data.length === 0) return null;
+  const w = Math.max(64, data.length * 4);
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * (w - 4) + 2;
+      const y = ((max - v) / range) * (height - 4) + 2;
+      return `${x},${y}`;
+    })
+    .join(' ');
+
+  return (
+    <svg width={w} height={height} viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none">
+      <polyline fill="none" stroke={color} strokeWidth="2" points={points} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
+// deterministic series builder for demo sparklines
+const buildSeries = (value, days = 30, bias = 0) => {
+  const result = [];
+  for (let i = 0; i < days; i++) {
+    const t = i / (days - 1);
+    const base = (0.6 + 0.4 * t) * value;
+    const wave = Math.sin((i + bias) * 0.3) * value * 0.03;
+    result.push(Math.max(0, Math.round(base + wave)));
+  }
+  return result;
+};
 
 const ReportsPage = ({ tours, sales, clients }) => {
   const hotTours = useMemo(() => getHotTours(tours), [tours]);
@@ -33,16 +67,57 @@ const ReportsPage = ({ tours, sales, clients }) => {
         <p className="eyebrow">Отчёты</p>
         <h2>Сводка продаж и статистика</h2>
 
-        <div style={{ marginTop: 12 }} className="stats-row three-up">
-          <StatTile label="Клиентов" value={formatNumber(clients.length)} tone="primary" />
-          <StatTile label="Путёвок" value={formatNumber(tours.length)} tone="success" />
-          <StatTile label="Продаж" value={formatNumber(sales.length)} tone="warning" />
+        {/* Top summary cards with sparklines (copies of ProfilePage report cards) */}
+        <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }}>
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Клиентов</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{clients.length}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(clients.length, 30, 1)} color="#2563eb" />
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Путёвок</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{tours.length}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(tours.length, 30, 3)} color="#10b981" />
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Продаж (кол-во)</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{summary.totalQuantity}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(summary.totalQuantity, 30, 5)} color="#f59e0b" />
+            </div>
+          </div>
         </div>
 
-        <div style={{ marginTop: 12 }} className="stats-row three-up">
-          <StatTile label="Выручка (без скидок)" value={formatCurrency(revenueNoDiscount)} tone="primary" />
-          <StatTile label="Выручка (с учётом скидок)" value={formatCurrency(summary.revenue)} tone="success" />
-          <StatTile label="Потери от скидок" value={formatCurrency(summary.discountLoss)} tone="warning" />
+        <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }}>
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Выручка (без скидок)</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(revenueNoDiscount)}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(Math.round(revenueNoDiscount / 1000), 30, 7)} color="#2563eb" />
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Выручка (с учётом скидок)</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(summary.revenue)}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(Math.round(summary.revenue / 1000), 30, 9)} color="#0ea5e9" />
+            </div>
+          </div>
+
+          <div style={{ background: 'white', padding: 12, borderRadius: 12, border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b' }}>Потери от скидок</div>
+            <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(summary.discountLoss)}</div>
+            <div style={{ marginTop: 8 }}>
+              <Sparkline data={buildSeries(Math.round(summary.discountLoss / 1000), 30, 11)} color="#ef4444" />
+            </div>
+          </div>
         </div>
 
         <div className="section-block" style={{ marginTop: 18 }}>
