@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 
@@ -54,6 +54,7 @@ class TourCreate(TourBase):
 
 class TourRead(TourBase):
     id: int
+    services: List['ServiceRead'] = []
 
     class Config:
         orm_mode = True
@@ -75,4 +76,25 @@ class SaleRead(SaleBase):
 
     class Config:
         orm_mode = True
+
+
+class ServiceBase(BaseModel):
+    name: str
+    cost: Optional[int] = 0
+
+
+class ServiceCreate(ServiceBase):
+    pass
+
+
+class ServiceRead(ServiceBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+# поддержка отложенной аннотации списка ServiceRead в TourRead
+from pydantic import BaseModel as _BaseModel  # noqa: F401
+
+
 
