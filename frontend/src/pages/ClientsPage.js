@@ -235,7 +235,7 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
                 <ul className="bullet-list">
                   {clientHistory.map((tour) => (
                     <li key={tour.id}>
-                      {tour.city} — {tour.title} ({formatCurrency(tour.price)})
+                      {tour.city} - {tour.title} ({formatCurrency(tour.price)})
                     </li>
                   ))}
                 </ul>

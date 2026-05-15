@@ -41,7 +41,7 @@ const TourDetailPage = () => {
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ color: '#64748b' }}>{tour.city} · {formatDate(tour.startDate)} — {formatDate(tour.endDate)}</div>
+              <div style={{ color: '#64748b' }}>{tour.city} · {formatDate(tour.startDate)} - {formatDate(tour.endDate)}</div>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{formatCurrency(tour.price)}</div>
             </div>
 

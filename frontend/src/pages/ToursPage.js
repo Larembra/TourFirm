@@ -183,7 +183,7 @@ const ToursPage = ({
               <ul className="bullet-list">
                 {priceByDateTours.map((tour) => (
                   <li key={tour.id}>
-                    {tour.title} — {tour.city}
+                    {tour.title} - {tour.city}
                   </li>
                 ))}
               </ul>

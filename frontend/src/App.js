@@ -48,6 +48,7 @@ const AppShell = () => {
     addClientToTour: app.addClientToTour,
     removeClientFromTour: app.removeClientFromTour,
     addManager: app.addManager,
+    updateManager: app.updateManager,
     removeManager: app.removeManager,
     signInAsLeader: app.signInAsLeader,
   };

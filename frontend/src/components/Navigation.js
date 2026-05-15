@@ -20,7 +20,7 @@ const Navigation = ({ activePage, user, onNavigate, onLogout, onAuth }) => {
     <header className="topbar">
       <div className="brand-block">
         <div>
-          <p className="eyebrow">TourFirm CRM</p>
+          <p className="eyebrow">TourFirm</p>
           <h1>Рабочее место туристической фирмы</h1>
         </div>
         <div className="user-chip">

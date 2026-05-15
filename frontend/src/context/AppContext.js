@@ -149,6 +149,11 @@ export const AppProvider = ({ children }) => {
             },
           ],
         })),
+      updateManager: (managerId, manager) =>
+        setState((current) => ({
+          ...current,
+          managers: current.managers.map((m) => (m.id === managerId ? { ...m, ...manager } : m)),
+        })),
       removeManager: (managerId) =>
         setState((current) => ({
           ...current,

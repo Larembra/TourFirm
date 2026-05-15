@@ -55,8 +55,8 @@ const SalesPage = ({ sales, tours, clients }) => {
             return (
               <div className="table-row" key={sale.id}>
                 <span>{formatDate(sale.date)}</span>
-                <span>{tour?.title ?? '—'}</span>
-                <span>{client?.name ?? '—'}</span>
+                <span>{tour?.title ?? '-'}</span>
+                <span>{client?.name ?? '-'}</span>
                 <span>{sale.quantity}</span>
               </div>
             );
