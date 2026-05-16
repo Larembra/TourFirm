@@ -38,6 +38,57 @@ const nextId = (prefix, items) => {
 export const AppProvider = ({ children }) => {
   const [state, setState] = useState(createInitialState);
 
+  // загрузка данных с бекенда (clients и tours). В случае ошибки остаёмся на mock-данных
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const base = 'http://127.0.0.1:8000';
+        const [clientsRes, toursRes, salesRes] = await Promise.all([
+          fetch(`${base}/api/clients`),
+          fetch(`${base}/api/tours`),
+          fetch(`${base}/api/sales`),
+        ]);
+
+        if (!clientsRes.ok || !toursRes.ok || !salesRes.ok) return;
+
+        const clientsJson = await clientsRes.json();
+        const toursJson = await toursRes.json();
+        const salesJson = await salesRes.json();
+
+        const mappedClients = clientsJson.map((c) => {
+          const clientSales = salesJson.filter((s) => s.client_id === c.id);
+          const historyTourIds = clientSales.map((s) => String(s.tour_id));
+          return {
+            id: String(c.id),
+            name: c.name,
+            city: c.city || '',
+            phone: c.phone || '',
+            email: c.email || '',
+            historyTourIds,
+            discountPercent: c.regular_customer ? 10 : 0,
+          };
+        });
+
+        const mappedTours = toursJson.map((t) => ({
+          id: String(t.id),
+          city: t.city,
+          title: t.title,
+          price: t.price,
+          start_date: t.start_date,
+          end_date: t.end_date,
+          description: t.description,
+          seats: t.seats,
+          assignedClientIds: t.assignedClientIds ?? [],
+        }));
+
+        setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours }));
+      } catch (e) {
+      }
+    };
+
+    fetchData();
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -68,20 +119,43 @@ export const AppProvider = ({ children }) => {
           tours: initialMockData.tours,
           sales: initialMockData.sales,
         })),
-      createClient: (client) =>
-        setState((current) => ({
-          ...current,
-          clients: [
-            ...current.clients,
-            {
-              id: nextId('c', current.clients),
-              historyTourIds: [],
-              // discount is assigned automatically based on history; new clients start with 0
-              discountPercent: 0,
-              ...client,
-            },
-          ],
-        })),
+      createClient: (client) => {
+        (async () => {
+          try {
+            const res = await fetch('http://127.0.0.1:8000/api/clients', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: client.name, city: client.city, phone: client.phone, email: client.email, regular_customer: false }),
+            });
+            if (!res.ok) throw new Error('Failed to create client');
+            const created = await res.json();
+            const mapped = {
+              id: String(created.id),
+              name: created.name,
+              city: created.city || '',
+              phone: created.phone || '',
+              email: created.email || '',
+              historyTourIds: created.historyTourIds ?? [],
+              discountPercent: created.regular_customer ? 10 : 0,
+            };
+            setState((current) => ({ ...current, clients: [...current.clients, mapped] }));
+            return;
+          } catch (e) {
+            setState((current) => ({
+              ...current,
+              clients: [
+                ...current.clients,
+                {
+                  id: nextId('c', current.clients),
+                  historyTourIds: [],
+                  discountPercent: 0,
+                  ...client,
+                },
+              ],
+            }));
+          }
+        })();
+      },
       addClientToTour: (tourId, clientId) =>
         setState((current) => ({
           ...current,
