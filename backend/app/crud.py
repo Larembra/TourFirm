@@ -118,6 +118,14 @@ def create_sale(db: Session, sale: schemas.SaleCreate):
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    # attach services if provided
+    if getattr(sale, 'service_ids', None):
+        for sid in sale.service_ids:
+            svc = db.query(models.Service).filter(models.Service.id == sid).first()
+            if svc and svc not in db_obj.services:
+                db_obj.services.append(svc)
+        db.commit()
+        db.refresh(db_obj)
     return db_obj
 
 
