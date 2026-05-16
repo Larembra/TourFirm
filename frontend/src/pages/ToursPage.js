@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import { formatCurrency, formatDate } from '../utils/date';
 import { getHotTours, getToursByCity } from '../utils/analytics';
 
@@ -46,6 +47,8 @@ const ToursPage = ({
     setModalOpen(true);
   };
 
+  const app = useApp();
+
   const openEditModal = (tour) => {
     setModalForm({
       city: tour.city || '',
@@ -69,20 +72,80 @@ const ToursPage = ({
 
   const handleModalSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      ...modalForm,
-      price: Number(modalForm.price) || 0,
-      seats: Number(modalForm.seats) || 0,
-      excursions: parseListField(modalForm.excursions),
-      services: parseListField(modalForm.services),
-      assignedClientIds: [],
-    };
-    if (editingId) {
-      onUpdateTour(editingId, { id: editingId, ...payload });
-    } else {
-      onCreateTour(payload);
-    }
-    closeModal();
+    (async () => {
+      try {
+        const base = 'http://127.0.0.1:8000';
+        const body = {
+          city: modalForm.city,
+          title: modalForm.title,
+          price: Number(modalForm.price) || 0,
+          start_date: modalForm.startDate || null,
+          end_date: modalForm.endDate || null,
+          description: modalForm.description || '',
+          seats: Number(modalForm.seats) || 0,
+        };
+        let tourResp;
+        if (editingId) {
+          const res = await fetch(`${base}/api/tours/${editingId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) throw new Error('Failed to update tour');
+          tourResp = await res.json();
+        } else {
+          const res = await fetch(`${base}/api/tours`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) throw new Error('Failed to create tour');
+          tourResp = await res.json();
+        }
+
+        const tourId = tourResp.id;
+
+        // create services (if provided as lines name:cost or name,cost)
+        const svcText = modalForm.services || '';
+        const svcLines = svcText.split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+        for (const line of svcLines) {
+          // parse name:cost or name|cost
+          let name = line;
+          let cost = 0;
+          if (line.includes(':')) {
+            const [n, c] = line.split(':');
+            name = n.trim();
+            cost = Number((c || '').trim()) || 0;
+          } else if (line.includes('|')) {
+            const [n, c] = line.split('|');
+            name = n.trim();
+            cost = Number((c || '').trim()) || 0;
+          }
+          const svcRes = await fetch(`${base}/api/services`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, cost }),
+          });
+          if (!svcRes.ok) continue;
+          const svcObj = await svcRes.json();
+          // attach to tour
+          await fetch(`${base}/api/tours/${tourId}/services/${svcObj.id}`, { method: 'POST' });
+        }
+
+        // upload image if any
+        if (modalForm.imageFile) {
+          const form = new FormData();
+          form.append('file', modalForm.imageFile);
+          await fetch(`${base}/api/tours/${tourId}/images`, { method: 'POST', body: form });
+        }
+
+        app.reloadData();
+        closeModal();
+      } catch (err) {
+        console.error(err);
+        window.alert('Ошибка при сохранении путёвки');
+      }
+    })();
   };
 
   const visibleTours = useMemo(() => {
@@ -213,7 +276,19 @@ const ToursPage = ({
                   ✏️
                 </button>
                 <button
-                  onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); if (window.confirm('Удалить путёвку?')) onDeleteTour(tour.id); }}
+                  onClick={async (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    if (!window.confirm('Удалить путёвку?')) return;
+                    try {
+                      const res = await fetch(`http://127.0.0.1:8000/api/tours/${tour.id}`, { method: 'DELETE' });
+                      if (!res.ok) throw new Error('Delete failed');
+                      app.reloadData();
+                    } catch (err) {
+                      console.error(err);
+                      window.alert('Не удалось удалить путёвку');
+                    }
+                  }}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
                   title="Удалить"
                 >
@@ -291,6 +366,10 @@ const ToursPage = ({
               <label className="full-width">
                 Услуги через запятую
                 <input value={modalForm.services} onChange={(e) => setModalForm((c) => ({ ...c, services: e.target.value }))} placeholder="Завтраки, трансфер" />
+              </label>
+              <label>
+                Фото (файл)
+                <input type="file" accept="image/*" onChange={(e) => setModalForm((c) => ({ ...c, imageFile: e.target.files && e.target.files[0] }))} />
               </label>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button type="submit" className="primary-button">{editingId ? 'Сохранить' : 'Создать'}</button>
