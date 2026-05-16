@@ -35,8 +35,55 @@ const ToursPage = ({
   const [startDateFilter, setStartDateFilter] = useState('');
   const [onlyHot, setOnlyHot] = useState(false);
   const [clientFilter, setClientFilter] = useState('');
-  // selected tour handled on separate detail page now
   const [form, setForm] = useState(emptyTour);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalForm, setModalForm] = useState(emptyTour);
+  const [editingId, setEditingId] = useState(null);
+
+  const openCreateModal = () => {
+    setModalForm(emptyTour);
+    setEditingId(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (tour) => {
+    setModalForm({
+      city: tour.city || '',
+      title: tour.title || '',
+      price: tour.price || 0,
+      startDate: tour.startDate || '',
+      endDate: tour.endDate || '',
+      description: tour.description || '',
+      excursions: (tour.excursions || []).join(', '),
+      services: (tour.services || []).map((s) => s.name).join(', '),
+      seats: tour.seats || 0,
+    });
+    setEditingId(tour.id);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingId(null);
+  };
+
+  const handleModalSubmit = (e) => {
+    e.preventDefault();
+    const payload = {
+      ...modalForm,
+      price: Number(modalForm.price) || 0,
+      seats: Number(modalForm.seats) || 0,
+      excursions: parseListField(modalForm.excursions),
+      services: parseListField(modalForm.services),
+      assignedClientIds: [],
+    };
+    if (editingId) {
+      onUpdateTour(editingId, { id: editingId, ...payload });
+    } else {
+      onCreateTour(payload);
+    }
+    closeModal();
+  };
 
   const visibleTours = useMemo(() => {
     let items = [...tours];
@@ -56,7 +103,6 @@ const ToursPage = ({
     return items.sort((left, right) => new Date(left.startDate) - new Date(right.startDate));
   }, [cityFilter, onlyHot, startDateFilter, tours]);
 
-  // detail page replaced selection; helper to get a default tour for quick actions
   const defaultTour = visibleTours[0] ?? null;
 
   const hotTours = useMemo(() => getHotTours(tours), [tours]);
@@ -65,7 +111,6 @@ const ToursPage = ({
     [startDateFilter, tours],
   );
 
-  // read client query param to prefill clientFilter and cityFilter when navigating from ClientsPage
   const location = useLocation();
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -158,10 +203,26 @@ const ToursPage = ({
 
         <div className="tour-grid" style={{ marginTop: 12 }}>
           {visibleTours.map((tour) => (
-            <div key={tour.id} className="tour-card">
+            <div key={tour.id} className="tour-card" style={{ position: 'relative', paddingTop: 32 }}>
+              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
+                <button
+                  onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); openEditModal(tour); }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  title="Редактировать"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); if (window.confirm('Удалить путёвку?')) onDeleteTour(tour.id); }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  title="Удалить"
+                >
+                  🗑️
+                </button>
+              </div>
               <Link to={`/tours/${tour.id}`}>
                 {tour.images && tour.images.length > 0 ? (
-                  <img src={tour.images[0].url} alt={tour.title} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8 }} />
+                  <img src={tour.images[0].url} alt={tour.title} style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8 }} />
                 ) : (
                   <div className="tour-image-placeholder">Фото путёвки</div>
                 )}
@@ -180,111 +241,65 @@ const ToursPage = ({
           {visibleTours.length === 0 ? <p className="empty-state">Путёвки не найдены.</p> : null}
         </div>
 
-
       </article>
 
-      <article className="panel">
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
         {canEdit ? (
-          <div className="section-block">
-            <h4>Создание и редактирование путёвок</h4>
-            <form className="form-grid" onSubmit={handleCreate}>
-              <label>
-                Город
-                <input
-                  value={form.city}
-                  onChange={(event) => setForm((current) => ({ ...current, city: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Название
-                <input
-                  value={form.title}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Стоимость
-                <input
-                  type="number"
-                  min="0"
-                  value={form.price}
-                  onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Дата начала
-                <input
-                  type="date"
-                  value={form.startDate}
-                  onChange={(event) => setForm((current) => ({ ...current, startDate: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Дата возвращения
-                <input
-                  type="date"
-                  value={form.endDate}
-                  onChange={(event) => setForm((current) => ({ ...current, endDate: event.target.value }))}
-                  required
-                />
-              </label>
-              <label>
-                Мест
-                <input
-                  type="number"
-                  min="1"
-                  value={form.seats}
-                  onChange={(event) => setForm((current) => ({ ...current, seats: event.target.value }))}
-                />
-              </label>
-              <label className="full-width">
-                Описание
-                <textarea
-                  rows="3"
-                  value={form.description}
-                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                />
-              </label>
-              <label className="full-width">
-                Экскурсии через запятую
-                <input
-                  value={form.excursions}
-                  onChange={(event) => setForm((current) => ({ ...current, excursions: event.target.value }))}
-                  placeholder="Музеи, прогулки, дегустация"
-                />
-              </label>
-              <label className="full-width">
-                Услуги через запятую
-                <input
-                  value={form.services}
-                  onChange={(event) => setForm((current) => ({ ...current, services: event.target.value }))}
-                  placeholder="Завтраки, трансфер"
-                />
-              </label>
-              <button type="submit" className="primary-button wide-button">
-                Создать путёвку
-              </button>
-              <button type="button" className="secondary-button wide-button" onClick={handleUpdate}>
-                Быстрое редактирование выбранной
-              </button>
-              <button
-                type="button"
-                className="danger-button wide-button"
-                onClick={() => false}
-                disabled
-              >
-                Удалить выбранную путёвку
-              </button>
-            </form>
-          </div>
+          <button className="primary-button" onClick={openCreateModal}>Создать путёвку</button>
         ) : (
           <p className="muted-text">Просматривайте каталог путёвок. Авторизуйтесь, чтобы управлять путёвками.</p>
         )}
-      </article>
+      </div>
+
+      {modalOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }} onClick={closeModal}>
+          <div style={{ width: 760, background: '#fff', borderRadius: 12, padding: 20 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>{editingId ? 'Редактирование путёвки' : 'Создание путёвки'}</h3>
+            <form className="form-grid" onSubmit={handleModalSubmit}>
+              <label>
+                Город
+                <input value={modalForm.city} onChange={(e) => setModalForm((c) => ({ ...c, city: e.target.value }))} required />
+              </label>
+              <label>
+                Название
+                <input value={modalForm.title} onChange={(e) => setModalForm((c) => ({ ...c, title: e.target.value }))} required />
+              </label>
+              <label>
+                Стоимость
+                <input type="number" min="0" value={modalForm.price} onChange={(e) => setModalForm((c) => ({ ...c, price: e.target.value }))} required />
+              </label>
+              <label>
+                Дата начала
+                <input type="date" value={modalForm.startDate} onChange={(e) => setModalForm((c) => ({ ...c, startDate: e.target.value }))} required />
+              </label>
+              <label>
+                Дата возвращения
+                <input type="date" value={modalForm.endDate} onChange={(e) => setModalForm((c) => ({ ...c, endDate: e.target.value }))} required />
+              </label>
+              <label>
+                Мест
+                <input type="number" min="1" value={modalForm.seats} onChange={(e) => setModalForm((c) => ({ ...c, seats: e.target.value }))} />
+              </label>
+              <label className="full-width">
+                Описание
+                <textarea rows="3" value={modalForm.description} onChange={(e) => setModalForm((c) => ({ ...c, description: e.target.value }))} />
+              </label>
+              <label className="full-width">
+                Экскурсии через запятую
+                <input value={modalForm.excursions} onChange={(e) => setModalForm((c) => ({ ...c, excursions: e.target.value }))} placeholder="Музеи, прогулки, дегустация" />
+              </label>
+              <label className="full-width">
+                Услуги через запятую
+                <input value={modalForm.services} onChange={(e) => setModalForm((c) => ({ ...c, services: e.target.value }))} placeholder="Завтраки, трансфер" />
+              </label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button type="submit" className="primary-button">{editingId ? 'Сохранить' : 'Создать'}</button>
+                <button type="button" className="secondary-button" onClick={closeModal}>Отмена</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
