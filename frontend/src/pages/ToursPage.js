@@ -12,7 +12,7 @@ const emptyTour = {
   endDate: '',
   description: '',
   excursions: '',
-  services: '',
+  services: [],
   seats: 10,
 };
 
@@ -42,7 +42,7 @@ const ToursPage = ({
   const [editingId, setEditingId] = useState(null);
 
   const openCreateModal = () => {
-    setModalForm(emptyTour);
+    setModalForm({ ...emptyTour });
     setEditingId(null);
     setModalOpen(true);
   };
@@ -58,7 +58,7 @@ const ToursPage = ({
       endDate: tour.endDate || '',
       description: tour.description || '',
       excursions: (tour.excursions || []).join(', '),
-      services: (tour.services || []).map((s) => s.name).join(', '),
+      services: (tour.services || []).map((s) => ({ name: s.name, cost: s.cost || 0 })),
       seats: tour.seats || 0,
     });
     setEditingId(tour.id);
@@ -105,22 +105,12 @@ const ToursPage = ({
 
         const tourId = tourResp.id;
 
-        // create services (if provided as lines name:cost or name,cost)
-        const svcText = modalForm.services || '';
-        const svcLines = svcText.split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
-        for (const line of svcLines) {
-          // parse name:cost or name|cost
-          let name = line;
-          let cost = 0;
-          if (line.includes(':')) {
-            const [n, c] = line.split(':');
-            name = n.trim();
-            cost = Number((c || '').trim()) || 0;
-          } else if (line.includes('|')) {
-            const [n, c] = line.split('|');
-            name = n.trim();
-            cost = Number((c || '').trim()) || 0;
-          }
+        // create services from modalForm.services array (each item {name, cost})
+        const servicesArray = Array.isArray(modalForm.services) ? modalForm.services : [];
+        for (const svc of servicesArray) {
+          const name = (svc.name || '').trim();
+          const cost = Number(svc.cost) || 0;
+          if (!name) continue;
           const svcRes = await fetch(`${base}/api/services`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -363,14 +353,58 @@ const ToursPage = ({
                 Экскурсии через запятую
                 <input value={modalForm.excursions} onChange={(e) => setModalForm((c) => ({ ...c, excursions: e.target.value }))} placeholder="Музеи, прогулки, дегустация" />
               </label>
-              <label className="full-width">
-                Услуги через запятую
-                <input value={modalForm.services} onChange={(e) => setModalForm((c) => ({ ...c, services: e.target.value }))} placeholder="Завтраки, трансфер" />
-              </label>
-              <label>
-                Фото (файл)
-                <input type="file" accept="image/*" onChange={(e) => setModalForm((c) => ({ ...c, imageFile: e.target.files && e.target.files[0] }))} />
-              </label>
+                          <div className="full-width">
+                            <label>Услуги</label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {(modalForm.services || []).map((svc, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <input
+                                    placeholder="Название услуги"
+                                    value={svc.name}
+                                    onChange={(e) => setModalForm((c) => {
+                                      const next = { ...c };
+                                      next.services = (next.services || []).slice();
+                                      next.services[idx] = { ...next.services[idx], name: e.target.value };
+                                      return next;
+                                    })}
+                                    style={{ flex: 1 }}
+                                    required
+                                  />
+                                  <input
+                                    placeholder="Стоимость"
+                                    type="number"
+                                    min="0"
+                                    value={svc.cost}
+                                    onChange={(e) => setModalForm((c) => {
+                                      const next = { ...c };
+                                      next.services = (next.services || []).slice();
+                                      next.services[idx] = { ...next.services[idx], cost: e.target.value };
+                                      return next;
+                                    })}
+                                    style={{ width: 120 }}
+                                    required
+                                  />
+                                  <button type="button" className="secondary-button" onClick={() => setModalForm((c) => {
+                                    const next = { ...c };
+                                    next.services = (next.services || []).slice();
+                                    next.services.splice(idx, 1);
+                                    return next;
+                                  })}>Удалить</button>
+                                </div>
+                              ))}
+                              <div>
+                                <button type="button" className="secondary-button" onClick={() => setModalForm((c) => {
+                                  const next = { ...c };
+                                  next.services = [ ...(next.services || []), { name: '', cost: 0 } ];
+                                  return next;
+                                })}>Добавить услугу</button>
+                              </div>
+                            </div>
+                          </div>
+                          <label>
+                            Фото (файл)
+                            <input type="file" accept="image/*" onChange={(e) => setModalForm((c) => ({ ...c, imageFile: e.target.files && e.target.files[0] }))} />
+                          </label>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button type="submit" className="primary-button">{editingId ? 'Сохранить' : 'Создать'}</button>
                 <button type="button" className="secondary-button" onClick={closeModal}>Отмена</button>
