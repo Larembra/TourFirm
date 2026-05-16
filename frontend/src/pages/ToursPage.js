@@ -180,38 +180,7 @@ const ToursPage = ({
           {visibleTours.length === 0 ? <p className="empty-state">Путёвки не найдены.</p> : null}
         </div>
 
-        <div className="section-block">
-          <h4>Путёвки с заданной датой начала</h4>
-          {startDateFilter ? (
-            hasDateFilterResult ? (
-              <ul className="bullet-list">
-                {priceByDateTours.map((tour) => (
-                  <li key={tour.id}>
-                    {tour.title} - {tour.city}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-state">Путёвок на выбранную дату нет.</p>
-            )
-          ) : (
-            <p className="muted-text">Выберите дату начала, чтобы увидеть совпадения.</p>
-          )}
-        </div>
 
-        <div className="section-block">
-          <h4>«Горящие» путёвки</h4>
-          <p className="muted-text">
-            Это путёвки, где дата отправления не более чем на 5 дней больше текущей.
-          </p>
-          <div className="chips-row">
-            {hotTours.map((tour) => (
-              <span key={tour.id} className="chip">
-                {tour.city} · {formatDate(tour.startDate)}
-              </span>
-            ))}
-          </div>
-        </div>
       </article>
 
       <article className="panel">

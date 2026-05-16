@@ -39,37 +39,38 @@ export const AppProvider = ({ children }) => {
   const [state, setState] = useState(createInitialState);
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const base = 'http://127.0.0.1:8000';
-        const [clientsRes, toursRes, salesRes] = await Promise.all([
-          fetch(`${base}/api/clients`),
-          fetch(`${base}/api/tours`),
-          fetch(`${base}/api/sales`),
-        ]);
+  const fetchAndSetData = async () => {
+    try {
+      const base = 'http://127.0.0.1:8000';
+      const [clientsRes, toursRes, salesRes] = await Promise.all([
+        fetch(`${base}/api/clients`),
+        fetch(`${base}/api/tours`),
+        fetch(`${base}/api/sales`),
+      ]);
 
-        if (!clientsRes.ok || !toursRes.ok || !salesRes.ok) return;
+      if (!clientsRes.ok || !toursRes.ok || !salesRes.ok) return;
 
-        const clientsJson = await clientsRes.json();
-        const toursJson = await toursRes.json();
-        const salesJson = await salesRes.json();
+      const clientsJson = await clientsRes.json();
+      const toursJson = await toursRes.json();
+      const salesJson = await salesRes.json();
 
-        const mappedClients = clientsJson.map((c) => {
-          const clientSales = salesJson.filter((s) => s.client_id === c.id);
-          const historyTourIds = clientSales.map((s) => String(s.tour_id));
-          return {
-            id: String(c.id),
-            name: c.name,
-            city: c.city || '',
-            phone: c.phone || '',
-            email: c.email || '',
-            historyTourIds,
-            discountPercent: c.regular_customer ? 10 : 0,
-          };
-        });
+      const mappedClients = clientsJson.map((c) => {
+        const clientSales = salesJson.filter((s) => s.client_id === c.id);
+        const historyTourIds = clientSales.map((s) => String(s.tour_id));
+        return {
+          id: String(c.id),
+          name: c.name,
+          city: c.city || '',
+          phone: c.phone || '',
+          email: c.email || '',
+          historyTourIds,
+          discountPercent: c.regular_customer ? 10 : 0,
+        };
+      });
 
-        const mappedTours = toursJson.map((t) => ({
+      const mappedTours = toursJson.map((t) => {
+        const assignedClientIds = salesJson.filter((s) => s.tour_id === t.id).map((s) => String(s.client_id));
+        return {
           id: String(t.id),
           city: t.city,
           title: t.title,
@@ -78,16 +79,20 @@ export const AppProvider = ({ children }) => {
           endDate: t.end_date || t.endDate,
           description: t.description,
           seats: t.seats,
-          assignedClientIds: t.assignedClientIds ?? [],
+          excursions: t.excursions ?? [],
+          services: (t.services || []).map((s) => ({ id: String(s.id), name: s.name, cost: s.cost })),
+          assignedClientIds,
           images: (t.images || []).map((img) => ({ url: `${base}${img.url}`, id: img.id, is_primary: img.is_primary })),
-        }));
+        };
+      });
 
-        setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours }));
-      } catch (e) {
-      }
-    };
+      setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours }));
+    } catch (e) {
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    fetchAndSetData();
   }, []);
 
   useEffect(() => {
@@ -156,6 +161,9 @@ export const AppProvider = ({ children }) => {
             }));
           }
         })();
+      },
+      reloadData: () => {
+        fetchAndSetData();
       },
       addClientToTour: (tourId, clientId) =>
         setState((current) => ({

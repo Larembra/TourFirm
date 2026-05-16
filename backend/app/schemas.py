@@ -69,12 +69,13 @@ class SaleBase(BaseModel):
 
 
 class SaleCreate(SaleBase):
-    pass
+    service_ids: Optional[List[int]] = None
 
 
 class SaleRead(SaleBase):
     id: int
     date: Optional[datetime]
+    services: List['ServiceRead'] = []
 
     class Config:
         orm_mode = True
@@ -111,6 +112,7 @@ class TourImageRead(BaseModel):
 
 
 TourRead.update_forward_refs()
+SaleRead.update_forward_refs()
 
 
 

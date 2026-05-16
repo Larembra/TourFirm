@@ -43,6 +43,14 @@ tour_services = Table(
 )
 
 
+# Association table for Sale <-> Service
+sale_services = Table(
+    'sale_services', Base.metadata,
+    Column('sale_id', Integer, ForeignKey('sales.id')),
+    Column('service_id', Integer, ForeignKey('services.id')),
+)
+
+
 class Service(Base):
     __tablename__ = 'services'
     id = Column(Integer, primary_key=True, index=True)
@@ -62,6 +70,7 @@ class Sale(Base):
 
     tour = relationship('Tour')
     client = relationship('Client')
+    services = relationship('Service', secondary=sale_services)
 
 
 # add relationship on Tour side to services

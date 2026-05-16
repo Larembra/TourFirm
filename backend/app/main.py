@@ -43,6 +43,30 @@ def seed_data():
             ]
             db.add_all(tours)
 
+        if not db.query(models.Service).first():
+            services = [
+                models.Service(name='Завтраки', cost=500),
+                models.Service(name='Трансфер', cost=1500),
+                models.Service(name='Экскурсия', cost=2500),
+            ]
+            db.add_all(services)
+            db.commit()
+
+        # привязать сервисы к путёвкам (если ещё не привязаны)
+        try:
+            tours_db = db.query(models.Tour).all()
+            services_db = db.query(models.Service).all()
+            if tours_db and services_db:
+                for i, tour in enumerate(tours_db):
+                    if not tour.services:
+                        # привяжем 1-2 услуги к каждой путёвке по кругу
+                        tour.services = [services_db[i % len(services_db)]]
+                        if len(services_db) > 1:
+                            tour.services.append(services_db[(i + 1) % len(services_db)])
+                db.commit()
+        except Exception:
+            pass
+
 
         db.commit()
 
