@@ -75,6 +75,16 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
 
   const handleModalSubmit = (event) => {
     event.preventDefault();
+    if (editingClientId) {
+      // update existing client
+      const payload = { name: form.name, city: form.city, phone: form.phone, email: form.email };
+      updateClient(editingClientId, payload);
+      setForm(emptyClient);
+      setIsCreateOpen(false);
+      setSelectedClientId(String(editingClientId));
+      setEditingClientId(null);
+      return;
+    }
     // enforce business rules: new client starts with empty history and 0% discount
     const newClient = { ...form, discountPercent: 0, historyTourIds: [] };
     onCreateClient(newClient);
@@ -88,7 +98,8 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
   };
 
   const canManage = Boolean(currentUser);
-  const { resetDemoData } = useApp();
+  const { resetDemoData, updateClient, removeClient } = useApp();
+  const [editingClientId, setEditingClientId] = useState(null);
   const navigate = useNavigate();
 
   return (
@@ -188,6 +199,7 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
                   className="primary-button"
                   onClick={() => {
                     setForm(emptyClient);
+                    setEditingClientId(null);
                     setIsCreateOpen(true);
                   }}
                 >
@@ -204,8 +216,48 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
       <article className="panel">
         {selectedClient ? (
           <>
-            <p className="eyebrow">Карточка клиента</p>
-            <h3>{selectedClient.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <p className="eyebrow" style={{ margin: 0 }}>Карточка клиента</p>
+                <h3 style={{ margin: '6px 0 0 0' }}>{selectedClient.name}</h3>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    // open edit modal
+                    setForm({ name: selectedClient.name, city: selectedClient.city, phone: selectedClient.phone, email: selectedClient.email });
+                    setEditingClientId(selectedClient.id);
+                    setIsCreateOpen(true);
+                  }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+                  title="Редактировать"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={async (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    if (!window.confirm('Удалить клиента?')) return;
+                    try {
+                      // remove via context action
+                      removeClient(selectedClient.id);
+                      // clear selection
+                      setSelectedClientId('');
+                    } catch (err) {
+                      console.error(err);
+                      window.alert('Не удалось удалить клиента');
+                    }
+                  }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+                  title="Удалить"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
             {(selectedClient.historyTourIds?.length ?? 0) >= 3 ? (
               <div className="role-badge permanent-badge" style={{ display: 'inline-block', marginTop: 8 }}>Постоянный клиент</div>
             ) : null}
@@ -265,7 +317,7 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
         {isCreateOpen && ReactDOM.createPortal(
           <div className="modal-overlay" onClick={handleModalClose}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-              <h2>Создать клиента</h2>
+              <h2>{editingClientId ? 'Редактирование клиента' : 'Создать клиента'}</h2>
               <form onSubmit={handleModalSubmit} className="form-grid">
                 <div className="form-row">
                   <label>ФИО</label>
@@ -307,7 +359,7 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
                     Отмена
                   </button>
                   <button type="submit" className="primary-button">
-                    Создать
+                    {editingClientId ? 'Сохранить' : 'Создать'}
                   </button>
                 </div>
               </form>

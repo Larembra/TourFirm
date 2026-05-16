@@ -42,19 +42,19 @@ export const AppProvider = ({ children }) => {
   const fetchAndSetData = async () => {
     try {
       const base = 'http://127.0.0.1:8000';
-      const [clientsRes, toursRes, salesRes, managersRes] = await Promise.all([
+      const [clientsRes, toursRes, salesRes, employeesRes] = await Promise.all([
         fetch(`${base}/api/clients`),
         fetch(`${base}/api/tours`),
         fetch(`${base}/api/sales`),
-        fetch(`${base}/api/managers`),
+        fetch(`${base}/api/employees`),
       ]);
 
-      if (!clientsRes.ok || !toursRes.ok || !salesRes.ok || !managersRes.ok) return;
+      if (!clientsRes.ok || !toursRes.ok || !salesRes.ok || !employeesRes.ok) return;
 
       const clientsJson = await clientsRes.json();
       const toursJson = await toursRes.json();
       const salesJson = await salesRes.json();
-      const managersJson = await managersRes.json();
+      const employeesJson = await employeesRes.json();
 
       const mappedClients = clientsJson.map((c) => {
         const clientSales = salesJson.filter((s) => s.client_id === c.id);
@@ -97,13 +97,16 @@ export const AppProvider = ({ children }) => {
         services: s.services || [],
       }));
 
-      const mappedManagers = managersJson.map((m) => ({
-        id: String(m.id),
-        name: m.name,
-        email: m.email || '',
-        phone: m.phone || '',
-        status: m.status || 'active',
-      }));
+      // keep existing `managers` state shape by selecting only employees with role === 'manager'
+      const mappedManagers = (employeesJson || [])
+        .filter((e) => !e.role || e.role === 'manager')
+        .map((m) => ({
+          id: String(m.id),
+          name: m.name,
+          email: m.email || '',
+          phone: m.phone || '',
+          status: m.status || 'active',
+        }));
 
       setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours, sales: mappedSales, managers: mappedManagers }));
     } catch (e) {
@@ -182,6 +185,48 @@ export const AppProvider = ({ children }) => {
           }
         })();
       },
+      updateClient: (clientId, client) => {
+        (async () => {
+          try {
+            const base = 'http://127.0.0.1:8000';
+            const res = await fetch(`${base}/api/clients/${clientId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: client.name, city: client.city, phone: client.phone, email: client.email, regular_customer: client.regular_customer ?? false }),
+            });
+            if (!res.ok) throw new Error('Failed to update client');
+            const updated = await res.json();
+            const mapped = {
+              id: String(updated.id),
+              name: updated.name,
+              city: updated.city || '',
+              phone: updated.phone || '',
+              email: updated.email || '',
+              historyTourIds: updated.historyTourIds ?? [],
+              discountPercent: updated.regular_customer ? 10 : 0,
+            };
+            setState((current) => ({ ...current, clients: current.clients.map((c) => (c.id === String(mapped.id) ? { ...c, ...mapped } : c)) }));
+            return;
+          } catch (e) {
+            // local fallback: update in-memory
+            setState((current) => ({ ...current, clients: current.clients.map((c) => (c.id === clientId ? { ...c, ...client } : c)) }));
+          }
+        })();
+      },
+      removeClient: (clientId) => {
+        (async () => {
+          try {
+            const base = 'http://127.0.0.1:8000';
+            const res = await fetch(`${base}/api/clients/${clientId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete client');
+            setState((current) => ({ ...current, clients: current.clients.filter((c) => c.id !== clientId) }));
+            return;
+          } catch (e) {
+            // fallback to local removal
+            setState((current) => ({ ...current, clients: current.clients.filter((c) => c.id !== clientId) }));
+          }
+        })();
+      },
       reloadData: () => {
         fetchAndSetData();
       },
@@ -244,10 +289,10 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/managers`, {
+            const res = await fetch(`${base}/api/employees`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password }),
+              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password, role: 'manager' }),
             });
             if (!res.ok) throw new Error('Failed to create manager');
             const created = await res.json();
@@ -274,10 +319,10 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/managers/${managerId}`, {
+            const res = await fetch(`${base}/api/employees/${managerId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password }),
+              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password, role: 'manager' }),
             });
             if (!res.ok) throw new Error('Failed to update manager');
             const updated = await res.json();
@@ -294,7 +339,7 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/managers/${managerId}`, { method: 'DELETE' });
+            const res = await fetch(`${base}/api/employees/${managerId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to delete manager');
             setState((current) => ({ ...current, managers: current.managers.filter((manager) => manager.id !== managerId) }));
             return;

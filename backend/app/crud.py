@@ -4,11 +4,14 @@ from . import models, schemas
 
 # Managers
 def get_managers(db: Session):
-    return db.query(models.Manager).all()
+    # backend now stores users in `employees` table; return those with role 'manager' and also include leaders if needed elsewhere
+    return db.query(models.Employee).filter(models.Employee.role == 'manager').all()
 
 
 def create_manager(db: Session, manager: schemas.ManagerCreate):
-    db_obj = models.Manager(name=manager.name, email=manager.email, phone=manager.phone, password=manager.password)
+    # create an employee row with role defaulting to 'manager' unless provided
+    role = getattr(manager, 'role', None) or 'manager'
+    db_obj = models.Employee(name=manager.name, email=manager.email, phone=manager.phone, password=manager.password, role=role)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -16,7 +19,7 @@ def create_manager(db: Session, manager: schemas.ManagerCreate):
 
 
 def update_manager(db: Session, manager_id: int, data: dict):
-    obj = db.query(models.Manager).filter(models.Manager.id == manager_id).first()
+    obj = db.query(models.Employee).filter(models.Employee.id == manager_id).first()
     if not obj:
         return None
     for k, v in data.items():
@@ -27,7 +30,7 @@ def update_manager(db: Session, manager_id: int, data: dict):
 
 
 def delete_manager(db: Session, manager_id: int):
-    obj = db.query(models.Manager).filter(models.Manager.id == manager_id).first()
+    obj = db.query(models.Employee).filter(models.Employee.id == manager_id).first()
     if not obj:
         return False
     db.delete(obj)
@@ -52,6 +55,27 @@ def create_client(db: Session, client: schemas.ClientCreate):
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+
+def update_client(db: Session, client_id: int, data: dict):
+    obj = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if not obj:
+        return None
+    for k, v in data.items():
+        if hasattr(obj, k):
+            setattr(obj, k, v)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+def delete_client(db: Session, client_id: int):
+    obj = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if not obj:
+        return False
+    db.delete(obj)
+    db.commit()
+    return True
 
 
 # Tours
