@@ -11,6 +11,7 @@ class Employee(Base):
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, nullable=True)
     password = Column(String, nullable=True)
+    photo = Column(String, nullable=True)
     # role differentiates regular manager and leader (administrative user)
     # allowed values: 'manager', 'leader'
     role = Column(String, nullable=False, default='manager')

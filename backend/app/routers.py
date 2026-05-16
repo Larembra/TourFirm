@@ -8,9 +8,8 @@ from fastapi.responses import JSONResponse
 from passlib.exc import UnknownHashError
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from .crud import pwd_context
-import os
 
 # JWT settings
 SECRET_KEY = os.environ.get('JWT_SECRET') or 'change-this-secret'
@@ -23,9 +22,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/auth/login')
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({'exp': expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -88,7 +87,7 @@ def login(payload: dict, db: Session = Depends(get_db)):
     if not verified:
         raise HTTPException(status_code=401, detail='Invalid credentials')
     access_token = create_access_token(data={'sub': str(emp.id), 'role': emp.role})
-    return {'access_token': access_token, 'token_type': 'bearer', 'user': {'id': emp.id, 'name': emp.name, 'email': emp.email, 'phone': emp.phone, 'role': emp.role}}
+    return {'access_token': access_token, 'token_type': 'bearer', 'user': {'id': emp.id, 'name': emp.name, 'email': emp.email, 'phone': emp.phone, 'photo': emp.photo, 'role': emp.role}}
 
 
 @router.get('/managers', response_model=list[schemas.ManagerRead])
@@ -106,10 +105,33 @@ def create_manager(mgr: schemas.ManagerCreate, db: Session = Depends(get_db)):
 
 @router.put('/managers/{manager_id}', response_model=schemas.ManagerRead)
 @router.put('/employees/{manager_id}', response_model=schemas.ManagerRead)
-def update_manager(manager_id: int, data: schemas.ManagerCreate, db: Session = Depends(get_db), current_user: models.Employee = Depends(get_current_user)):
-    if current_user.role != 'leader':
+def update_manager(manager_id: int, data: dict, db: Session = Depends(get_db), current_user: models.Employee = Depends(get_current_user)):
+    # allow leaders to update any manager, or allow users to update their own profile
+    if current_user.role != 'leader' and current_user.id != manager_id:
         raise HTTPException(status_code=403, detail='Forbidden')
-    obj = crud.update_manager(db, manager_id, data.dict())
+
+    # if user tries to change password for themselves, require old_password verification
+    if current_user.id == manager_id and 'password' in data:
+        old = data.pop('old_password', None)
+        if not old:
+            raise HTTPException(status_code=400, detail='Current password required to change password')
+        # verify old password
+        verified = False
+        try:
+            verified = crud.pwd_context.verify(old, current_user.password)
+        except Exception:
+            try:
+                import bcrypt as _bcrypt
+                pw_bytes = old.encode('utf-8')
+                if len(pw_bytes) > 72:
+                    pw_bytes = pw_bytes[:72]
+                verified = _bcrypt.checkpw(pw_bytes, current_user.password.encode('utf-8'))
+            except Exception:
+                verified = False
+        if not verified:
+            raise HTTPException(status_code=401, detail='Current password is incorrect')
+
+    obj = crud.update_manager(db, manager_id, data)
     if not obj:
         raise HTTPException(status_code=404, detail='Manager not found')
     return obj
@@ -262,5 +284,33 @@ async def upload_tour_image(tour_id: int, file: UploadFile = File(...), db: Sess
     db.commit()
     db.refresh(img)
     return JSONResponse({'id': img.id, 'url': url, 'is_primary': img.is_primary, 'order': img.order})
+
+
+
+@router.post('/employees/{employee_id}/photo')
+async def upload_employee_photo(employee_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.Employee = Depends(get_current_user)):
+    # allow leaders or the user themselves
+    if current_user.role != 'leader' and current_user.id != employee_id:
+        raise HTTPException(status_code=403, detail='Forbidden')
+    emp = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
+    if not emp:
+        raise HTTPException(status_code=404, detail='Employee not found')
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail='File must be an image')
+    uploads_dir = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
+    os.makedirs(uploads_dir, exist_ok=True)
+    import uuid
+    safe_name = os.path.basename(file.filename)
+    filename = f"{uuid.uuid4().hex}_{safe_name}"
+    save_path = os.path.join(uploads_dir, filename)
+    content = await file.read()
+    with open(save_path, 'wb') as f:
+        f.write(content)
+    url = f"/static/uploads/{filename}"
+    emp.photo = url
+    db.add(emp)
+    db.commit()
+    db.refresh(emp)
+    return JSONResponse({'id': emp.id, 'url': url, 'photo': emp.photo})
 
 

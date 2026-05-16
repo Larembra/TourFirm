@@ -7,6 +7,7 @@ class ManagerBase(BaseModel):
     name: str
     email: str
     phone: Optional[str] = None
+    photo: Optional[str] = None
     # for compatibility with new employees table we may include role here
     role: Optional[str] = 'manager'
 
@@ -18,6 +19,7 @@ class ManagerCreate(ManagerBase):
 class ManagerRead(ManagerBase):
     id: int
     role: Optional[str] = 'manager'
+    photo: Optional[str] = None
 
     class Config:
         orm_mode = True
