@@ -106,6 +106,22 @@ const ToursPage = ({
         const tourId = tourResp.id;
 
         // create services from modalForm.services array (each item {name, cost})
+        // If we're updating an existing tour, remove current service associations first
+        if (editingId) {
+          try {
+            const curRes = await fetch(`${base}/api/tours/${tourId}/services`);
+            if (curRes.ok) {
+              const curServices = await curRes.json();
+              for (const s of curServices) {
+                // remove association
+                await fetch(`${base}/api/tours/${tourId}/services/${s.id}`, { method: 'DELETE' });
+              }
+            }
+          } catch (err) {
+            console.warn('Failed to clear existing services for tour', err);
+          }
+        }
+
         const servicesArray = Array.isArray(modalForm.services) ? modalForm.services : [];
         for (const svc of servicesArray) {
           const name = (svc.name || '').trim();
