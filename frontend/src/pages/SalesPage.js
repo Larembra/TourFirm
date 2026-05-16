@@ -46,7 +46,7 @@ const SalesPage = ({ sales, tours, clients }) => {
             <span>Дата</span>
             <span>Путёвка</span>
             <span>Клиент</span>
-            <span>Количество</span>
+            <span>Стоимость</span>
           </div>
           {visibleSales.map((sale) => {
             const tour = tours.find((item) => item.id === sale.tourId);
@@ -57,7 +57,7 @@ const SalesPage = ({ sales, tours, clients }) => {
                 <span>{formatDate(sale.date)}</span>
                 <span>{tour?.title ?? '-'}</span>
                 <span>{client?.name ?? '-'}</span>
-                <span>{sale.quantity}</span>
+                <span>{tour?.price}</span>
               </div>
             );
           })}

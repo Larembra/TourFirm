@@ -17,11 +17,12 @@ def seed_data():
     db = SessionLocal()
     try:
 
-        if not db.query(models.Manager).first():
+        # seed employees table with sample managers
+        if not db.query(models.Employee).first():
             mgrs = [
-                models.Manager(name='Иван Иванов', email='ivan@example.com', phone='+70001112233', password='pass1'),
-                models.Manager(name='Мария Петрова', email='maria@example.com', phone='+70002223344', password='pass2'),
-                models.Manager(name='Алексей Сидоров', email='alex@example.com', phone='+70003334455', password='pass3'),
+                models.Employee(name='Иван Иванов', email='ivan@example.com', phone='+70001112233', password='pass1', role='manager'),
+                models.Employee(name='Мария Петрова', email='maria@example.com', phone='+70002223344', password='pass2', role='manager'),
+                models.Employee(name='Алексей Сидоров', email='alex@example.com', phone='+70003334455', password='pass3', role='manager'),
             ]
             db.add_all(mgrs)
 

@@ -10,16 +10,19 @@ router = APIRouter()
 
 
 @router.get('/managers', response_model=list[schemas.ManagerRead])
+@router.get('/employees', response_model=list[schemas.ManagerRead])
 def list_managers(db: Session = Depends(get_db)):
     return crud.get_managers(db)
 
 
 @router.post('/managers', response_model=schemas.ManagerRead)
+@router.post('/employees', response_model=schemas.ManagerRead)
 def create_manager(mgr: schemas.ManagerCreate, db: Session = Depends(get_db)):
     return crud.create_manager(db, mgr)
 
 
 @router.put('/managers/{manager_id}', response_model=schemas.ManagerRead)
+@router.put('/employees/{manager_id}', response_model=schemas.ManagerRead)
 def update_manager(manager_id: int, data: schemas.ManagerCreate, db: Session = Depends(get_db)):
     obj = crud.update_manager(db, manager_id, data.dict())
     if not obj:
@@ -28,6 +31,7 @@ def update_manager(manager_id: int, data: schemas.ManagerCreate, db: Session = D
 
 
 @router.delete('/managers/{manager_id}')
+@router.delete('/employees/{manager_id}')
 def delete_manager(manager_id: int, db: Session = Depends(get_db)):
     ok = crud.delete_manager(db, manager_id)
     if not ok:
@@ -43,6 +47,22 @@ def list_clients(db: Session = Depends(get_db)):
 @router.post('/clients', response_model=schemas.ClientRead)
 def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
     return crud.create_client(db, client)
+
+
+@router.put('/clients/{client_id}', response_model=schemas.ClientRead)
+def update_client(client_id: int, client: schemas.ClientCreate, db: Session = Depends(get_db)):
+    obj = crud.update_client(db, client_id, client.dict())
+    if not obj:
+        raise HTTPException(status_code=404, detail='Client not found')
+    return obj
+
+
+@router.delete('/clients/{client_id}')
+def delete_client(client_id: int, db: Session = Depends(get_db)):
+    ok = crud.delete_client(db, client_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail='Client not found')
+    return {'ok': True}
 
 
 @router.get('/tours', response_model=list[schemas.TourRead])
