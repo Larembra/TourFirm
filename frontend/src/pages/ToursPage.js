@@ -160,7 +160,11 @@ const ToursPage = ({
           {visibleTours.map((tour) => (
             <div key={tour.id} className="tour-card">
               <Link to={`/tours/${tour.id}`}>
-                <div className="tour-image-placeholder">Фото путёвки</div>
+                {tour.images && tour.images.length > 0 ? (
+                  <img src={tour.images[0].url} alt={tour.title} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8 }} />
+                ) : (
+                  <div className="tour-image-placeholder">Фото путёвки</div>
+                )}
               </Link>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Link to={`/tours/${tour.id}`} style={{ textDecoration: 'none' }}>

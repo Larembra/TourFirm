@@ -68,3 +68,19 @@ class Sale(Base):
 Tour.services = relationship('Service', secondary=tour_services, back_populates='tours')
 
 
+# Images for tours
+class TourImage(Base):
+    __tablename__ = 'tour_images'
+    id = Column(Integer, primary_key=True, index=True)
+    tour_id = Column(Integer, ForeignKey('tours.id', ondelete='CASCADE'), nullable=False)
+    url = Column(String, nullable=False)
+    is_primary = Column(Boolean, default=False)
+    order = Column(Integer, default=0)
+
+    tour = relationship('Tour', back_populates='images')
+
+
+# add relationship on Tour side to images
+Tour.images = relationship('TourImage', back_populates='tour', cascade='all, delete-orphan')
+
+

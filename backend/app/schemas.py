@@ -56,6 +56,7 @@ class TourCreate(TourBase):
 class TourRead(TourBase):
     id: int
     services: List['ServiceRead'] = []
+    images: List['TourImageRead'] = []
 
     class Config:
         orm_mode = True
@@ -96,6 +97,17 @@ class ServiceRead(ServiceBase):
 
 # поддержка отложенной аннотации списка ServiceRead в TourRead
 from pydantic import BaseModel as _BaseModel  # noqa: F401
+
+
+
+class TourImageRead(BaseModel):
+    id: int
+    url: str
+    is_primary: Optional[bool] = False
+    order: Optional[int] = 0
+
+    class Config:
+        orm_mode = True
 
 
 TourRead.update_forward_refs()

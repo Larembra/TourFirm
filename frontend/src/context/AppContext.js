@@ -38,7 +38,7 @@ const nextId = (prefix, items) => {
 export const AppProvider = ({ children }) => {
   const [state, setState] = useState(createInitialState);
 
-  // загрузка данных с бекенда (clients и tours). В случае ошибки остаёмся на mock-данных
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -74,11 +74,12 @@ export const AppProvider = ({ children }) => {
           city: t.city,
           title: t.title,
           price: t.price,
-          start_date: t.start_date,
-          end_date: t.end_date,
+          startDate: t.start_date || t.startDate,
+          endDate: t.end_date || t.endDate,
           description: t.description,
           seats: t.seats,
           assignedClientIds: t.assignedClientIds ?? [],
+          images: (t.images || []).map((img) => ({ url: `${base}${img.url}`, id: img.id, is_primary: img.is_primary })),
         }));
 
         setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours }));

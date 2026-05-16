@@ -4,6 +4,8 @@ from .database import engine, SessionLocal
 from sqlalchemy import inspect, text
 from . import models
 from .routers import router as api_router
+from fastapi.staticfiles import StaticFiles
+import os
 
 
 # create tables
@@ -56,6 +58,23 @@ def seed_data():
                 db.add_all(sales)
                 db.commit()
 
+        # seed tour images from backend/static/uploads if present and no images in DB
+        try:
+            if not db.query(models.TourImage).first():
+                static_dir = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads')
+                if os.path.isdir(static_dir):
+                    files = [f for f in os.listdir(static_dir) if not f.startswith('.')]
+                    tours_db = db.query(models.Tour).limit(len(files)).all()
+                    imgs = []
+                    for i, fname in enumerate(files[: len(tours_db)]):
+                        url = f"/static/uploads/{fname}"
+                        imgs.append(models.TourImage(tour_id=tours_db[i].id, url=url, is_primary=(i == 0)))
+                    if imgs:
+                        db.add_all(imgs)
+                        db.commit()
+        except Exception:
+            pass
+
     finally:
         db.close()
 
@@ -77,6 +96,11 @@ def migrate_clients_column():
 
 
 app = FastAPI(title='Tourfirm API')
+
+# mount static files
+static_dir = os.path.join(os.path.dirname(__file__), '..', 'static')
+os.makedirs(os.path.join(static_dir, 'uploads'), exist_ok=True)
+app.mount('/static', StaticFiles(directory=static_dir), name='static')
 
 app.add_middleware(
     CORSMiddleware,
