@@ -699,6 +699,14 @@ textarea:focus {
   width: 100%;
 }
 
+/* When profile edit modal is open, slightly change appearance of the underlying profile card */
+.panel.editing {
+  transform: scale(0.99);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  opacity: 0.98;
+  box-shadow: 0 28px 80px rgba(2,6,23,0.12);
+}
+
 /* Tighter form spacing inside modal */
 .modal-card .form-grid {
   gap: 12px;
@@ -718,6 +726,18 @@ textarea:focus {
 .modal-card textarea {
   padding: 10px 12px;
   border-radius: 10px;
+}
+
+/* make label text and inputs spaced out inside modal forms */
+.modal-card label {
+  display: grid;
+  gap: 8px; /* space between label text and the input */
+  margin-bottom: 10px;
+}
+
+.modal-card input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Small pagination tweaks */

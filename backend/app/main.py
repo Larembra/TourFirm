@@ -124,6 +124,18 @@ def migrate_clients_column():
             conn.execute(text('ALTER TABLE clients DROP COLUMN discount_percent'))
 
 
+def migrate_employee_photo_column():
+    inspector = inspect(engine)
+    try:
+        cols = [c['name'] for c in inspector.get_columns('employees')]
+    except Exception:
+        return
+    if 'photo' in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE employees ADD COLUMN photo VARCHAR"))
+
+
 app = FastAPI(title='Tourfirm API')
 
 # mount static files
@@ -145,6 +157,7 @@ def on_startup():
 
     try:
         migrate_clients_column()
+        migrate_employee_photo_column()
         seed_data()
     except Exception:
 
