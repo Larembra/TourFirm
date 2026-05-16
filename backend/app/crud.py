@@ -1,5 +1,47 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from passlib.context import CryptContext
+import re
+
+# password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def safe_hash(password: str) -> str:
+    """Hash a password but truncate to 72 bytes for bcrypt if necessary."""
+    # if the value already looks like a bcrypt hash, return it unchanged
+    try:
+        if isinstance(password, str):
+            # bcrypt hashes typically start with $2a$, $2b$ or $2y$ followed by cost and 53 chars
+            if re.match(r"^\$2[aby]\$\d{2}\$[\.\/=A-Za-z0-9]{53}$", password):
+                return password
+    except Exception:
+        pass
+    if password is None:
+        return None
+    b = password.encode('utf-8')
+    if len(b) > 72:
+        # truncate to 72 bytes (bcrypt limitation)
+        b = b[:72]
+        try:
+            password = b.decode('utf-8')
+        except Exception:
+            # fallback: ignore decoding errors
+            password = b.decode('utf-8', errors='ignore')
+    try:
+        return pwd_context.hash(password)
+    except ValueError as e:
+        # bcrypt backend may raise ValueError if it receives >72 bytes or if backend is misbehaving.
+        # As a fallback, try to use the installed bcrypt module directly on truncated bytes.
+        try:
+            import bcrypt as _bcrypt
+            # ensure we have bytes truncated to 72 already
+            bb = b if len(b) <= 72 else b[:72]
+            h = _bcrypt.hashpw(bb, _bcrypt.gensalt())
+            return h.decode('utf-8')
+        except Exception:
+            # re-raise original error if fallback fails
+            raise
 
 
 # Managers
@@ -11,7 +53,10 @@ def get_managers(db: Session):
 def create_manager(db: Session, manager: schemas.ManagerCreate):
     # create an employee row with role defaulting to 'manager' unless provided
     role = getattr(manager, 'role', None) or 'manager'
-    db_obj = models.Employee(name=manager.name, email=manager.email, phone=manager.phone, password=manager.password, role=role)
+    hashed = None
+    if getattr(manager, 'password', None):
+        hashed = safe_hash(manager.password)
+    db_obj = models.Employee(name=manager.name, email=manager.email, phone=manager.phone, password=hashed, role=role)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -22,6 +67,11 @@ def update_manager(db: Session, manager_id: int, data: dict):
     obj = db.query(models.Employee).filter(models.Employee.id == manager_id).first()
     if not obj:
         return None
+    # handle password hashing explicitly
+    if 'password' in data:
+        pw = data.pop('password')
+        if pw:
+            obj.password = safe_hash(pw)
     for k, v in data.items():
         setattr(obj, k, v)
     db.commit()
