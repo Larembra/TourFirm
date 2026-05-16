@@ -6,10 +6,14 @@ from . import models
 from .routers import router as api_router
 from fastapi.staticfiles import StaticFiles
 import os
+from passlib.context import CryptContext
 
 
 # create tables
 models.Base.metadata.create_all(bind=engine)
+
+# password hashing for seed
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def seed_data():
@@ -20,9 +24,9 @@ def seed_data():
         # seed employees table with sample managers
         if not db.query(models.Employee).first():
             mgrs = [
-                models.Employee(name='Иван Иванов', email='ivan@example.com', phone='+70001112233', password='pass1', role='manager'),
-                models.Employee(name='Мария Петрова', email='maria@example.com', phone='+70002223344', password='pass2', role='manager'),
-                models.Employee(name='Алексей Сидоров', email='alex@example.com', phone='+70003334455', password='pass3', role='manager'),
+                models.Employee(name='Иван Иванов', email='ivan@example.com', phone='+70001112233', password=pwd_context.hash('pass1'), role='manager'),
+                models.Employee(name='Мария Петрова', email='maria@example.com', phone='+70002223344', password=pwd_context.hash('pass2'), role='manager'),
+                models.Employee(name='Алексей Сидоров', email='alex@example.com', phone='+70003334455', password=pwd_context.hash('pass3'), role='manager'),
             ]
             db.add_all(mgrs)
 

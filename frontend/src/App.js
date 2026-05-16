@@ -60,7 +60,7 @@ const AppShell = () => {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<HomePage onAuth={() => navigate('/auth')} />} />
-          <Route path="/auth" element={<AuthPage onLogin={async (email, password) => { try { await app.signIn(email, password); navigate('/profile'); } catch (e) { window.alert('Неверный email или пароль'); } }} />} />
+          <Route path="/auth" element={<AuthPage onLogin={async (email, password) => { try { await app.signIn(email, password); app.reloadData(); navigate('/profile'); } catch (e) { window.alert('Неверный email или пароль'); } }} />} />
           <Route
             path="/clients"
             element={

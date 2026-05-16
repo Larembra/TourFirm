@@ -109,12 +109,12 @@ const ToursPage = ({
         // If we're updating an existing tour, remove current service associations first
         if (editingId) {
           try {
-            const curRes = await fetch(`${base}/api/tours/${tourId}/services`);
+            const curRes = await fetch(`${base}/api/tours/${tourId}/services`, { headers: app.token ? { Authorization: `Bearer ${app.token}` } : {} });
             if (curRes.ok) {
               const curServices = await curRes.json();
               for (const s of curServices) {
                 // remove association
-                await fetch(`${base}/api/tours/${tourId}/services/${s.id}`, { method: 'DELETE' });
+                await fetch(`${base}/api/tours/${tourId}/services/${s.id}`, { method: 'DELETE', headers: app.token ? { Authorization: `Bearer ${app.token}` } : {} });
               }
             }
           } catch (err) {
@@ -129,20 +129,20 @@ const ToursPage = ({
           if (!name) continue;
           const svcRes = await fetch(`${base}/api/services`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(app.token ? { Authorization: `Bearer ${app.token}` } : {}) },
             body: JSON.stringify({ name, cost }),
           });
           if (!svcRes.ok) continue;
           const svcObj = await svcRes.json();
           // attach to tour
-          await fetch(`${base}/api/tours/${tourId}/services/${svcObj.id}`, { method: 'POST' });
+          await fetch(`${base}/api/tours/${tourId}/services/${svcObj.id}`, { method: 'POST', headers: app.token ? { Authorization: `Bearer ${app.token}` } : {} });
         }
 
         // upload image if any
         if (modalForm.imageFile) {
           const form = new FormData();
           form.append('file', modalForm.imageFile);
-          await fetch(`${base}/api/tours/${tourId}/images`, { method: 'POST', body: form });
+          await fetch(`${base}/api/tours/${tourId}/images`, { method: 'POST', body: form, headers: app.token ? { Authorization: `Bearer ${app.token}` } : {} });
         }
 
         app.reloadData();
@@ -288,7 +288,7 @@ const ToursPage = ({
                       ev.preventDefault();
                       if (!window.confirm('Удалить путёвку?')) return;
                       try {
-                        const res = await fetch(`http://127.0.0.1:8000/api/tours/${tour.id}`, { method: 'DELETE' });
+                        const res = await fetch(`http://127.0.0.1:8000/api/tours/${tour.id}`, { method: 'DELETE', headers: app.token ? { Authorization: `Bearer ${app.token}` } : {} });
                         if (!res.ok) throw new Error('Delete failed');
                         app.reloadData();
                       } catch (err) {

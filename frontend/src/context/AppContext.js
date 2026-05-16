@@ -26,7 +26,8 @@ const createInitialState = () => {
     managers: stored?.managers ?? initialMockData.managers,
     clients: stored?.clients ?? initialMockData.clients,
     tours: stored?.tours ?? initialMockData.tours,
-    sales: stored?.sales ?? initialMockData.sales,
+      sales: stored?.sales ?? initialMockData.sales,
+      token: stored?.token ?? null,
   };
 };
 
@@ -42,11 +43,13 @@ export const AppProvider = ({ children }) => {
   const fetchAndSetData = async () => {
     try {
       const base = 'http://127.0.0.1:8000';
+      const token = state.token;
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
       const [clientsRes, toursRes, salesRes, employeesRes] = await Promise.all([
-        fetch(`${base}/api/clients`),
-        fetch(`${base}/api/tours`),
-        fetch(`${base}/api/sales`),
-        fetch(`${base}/api/employees`),
+        fetch(`${base}/api/clients`, { headers: { ...authHeader } }),
+        fetch(`${base}/api/tours`, { headers: { ...authHeader } }),
+        fetch(`${base}/api/sales`, { headers: { ...authHeader } }),
+        fetch(`${base}/api/employees`, { headers: { ...authHeader } }),
       ]);
 
       if (!clientsRes.ok || !toursRes.ok || !salesRes.ok || !employeesRes.ok) return;
@@ -131,12 +134,15 @@ export const AppProvider = ({ children }) => {
         clients: state.clients,
         tours: state.tours,
         sales: state.sales,
+        token: state.token ?? null,
       }),
     );
   }, [state]);
 
-  const actions = useMemo(
-    () => ({
+  const actions = useMemo(() => {
+    const authHeaders = (contentType = true) => ({ ...(contentType ? { 'Content-Type': 'application/json' } : {}), ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}) });
+
+    return {
       signInAsLeader: () => setState((current) => ({ ...current, currentUser: demoUser })),
       signIn: async (email, password) => {
         try {
@@ -147,7 +153,9 @@ export const AppProvider = ({ children }) => {
             body: JSON.stringify({ email, password }),
           });
           if (!res.ok) throw new Error('Auth failed');
-          const user = await res.json();
+          const data = await res.json();
+          const user = data.user ?? data;
+          const token = data.access_token ?? null;
           const mapped = {
             id: String(user.id),
             name: user.name,
@@ -155,14 +163,14 @@ export const AppProvider = ({ children }) => {
             role: user.role || 'manager',
             position: user.role === 'leader' ? 'Руководитель' : 'Менеджер',
           };
-          setState((current) => ({ ...current, currentUser: mapped }));
+          setState((current) => ({ ...current, currentUser: mapped, token }));
           return mapped;
         } catch (e) {
           console.error('Sign in failed', e);
           throw e;
         }
       },
-      signOut: () => setState((current) => ({ ...current, currentUser: null })),
+      signOut: () => setState((current) => ({ ...current, currentUser: null, token: null })),
       // reset demo data from initial mock (useful when mockData.js was changed)
       resetDemoData: () =>
         setState(() => ({
@@ -177,7 +185,7 @@ export const AppProvider = ({ children }) => {
           try {
             const res = await fetch('http://127.0.0.1:8000/api/clients', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: authHeaders(true),
               body: JSON.stringify({ name: client.name, city: client.city, phone: client.phone, email: client.email, regular_customer: false }),
             });
             if (!res.ok) throw new Error('Failed to create client');
@@ -215,7 +223,7 @@ export const AppProvider = ({ children }) => {
             const base = 'http://127.0.0.1:8000';
             const res = await fetch(`${base}/api/clients/${clientId}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: authHeaders(true),
               body: JSON.stringify({ name: client.name, city: client.city, phone: client.phone, email: client.email, regular_customer: client.regular_customer ?? false }),
             });
             if (!res.ok) throw new Error('Failed to update client');
@@ -241,7 +249,7 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/clients/${clientId}`, { method: 'DELETE' });
+            const res = await fetch(`${base}/api/clients/${clientId}`, { method: 'DELETE', headers: authHeaders(false) });
             if (!res.ok) throw new Error('Failed to delete client');
             setState((current) => ({ ...current, clients: current.clients.filter((c) => c.id !== clientId) }));
             return;
@@ -313,9 +321,9 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/employees`, {
+            const res = await fetch(`${base}/api/employees/protected`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: authHeaders(true),
               body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password, role: 'manager' }),
             });
             if (!res.ok) throw new Error('Failed to create manager');
@@ -345,7 +353,7 @@ export const AppProvider = ({ children }) => {
             const base = 'http://127.0.0.1:8000';
             const res = await fetch(`${base}/api/employees/${managerId}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: authHeaders(true),
               body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password, role: 'manager' }),
             });
             if (!res.ok) throw new Error('Failed to update manager');
@@ -363,7 +371,7 @@ export const AppProvider = ({ children }) => {
         (async () => {
           try {
             const base = 'http://127.0.0.1:8000';
-            const res = await fetch(`${base}/api/employees/${managerId}`, { method: 'DELETE' });
+            const res = await fetch(`${base}/api/employees/${managerId}`, { method: 'DELETE', headers: authHeaders(false) });
             if (!res.ok) throw new Error('Failed to delete manager');
             setState((current) => ({ ...current, managers: current.managers.filter((manager) => manager.id !== managerId) }));
             return;
@@ -373,9 +381,8 @@ export const AppProvider = ({ children }) => {
           }
         })();
       },
-    }),
-    [],
-  );
+    };
+  }, [state.token]);
 
   const value = useMemo(
     () => ({
