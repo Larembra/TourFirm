@@ -102,6 +102,7 @@ const AppShell = () => {
                   managers={routerState.managers}
                   onAddManager={routerState.addManager}
                   onRemoveManager={routerState.removeManager}
+                  onUpdateManager={routerState.updateManager}
                 />
               </ProtectedRoute>
             }

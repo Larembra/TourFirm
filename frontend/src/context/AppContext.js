@@ -42,17 +42,19 @@ export const AppProvider = ({ children }) => {
   const fetchAndSetData = async () => {
     try {
       const base = 'http://127.0.0.1:8000';
-      const [clientsRes, toursRes, salesRes] = await Promise.all([
+      const [clientsRes, toursRes, salesRes, managersRes] = await Promise.all([
         fetch(`${base}/api/clients`),
         fetch(`${base}/api/tours`),
         fetch(`${base}/api/sales`),
+        fetch(`${base}/api/managers`),
       ]);
 
-      if (!clientsRes.ok || !toursRes.ok || !salesRes.ok) return;
+      if (!clientsRes.ok || !toursRes.ok || !salesRes.ok || !managersRes.ok) return;
 
       const clientsJson = await clientsRes.json();
       const toursJson = await toursRes.json();
       const salesJson = await salesRes.json();
+      const managersJson = await managersRes.json();
 
       const mappedClients = clientsJson.map((c) => {
         const clientSales = salesJson.filter((s) => s.client_id === c.id);
@@ -86,8 +88,26 @@ export const AppProvider = ({ children }) => {
         };
       });
 
-      setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours }));
+      const mappedSales = salesJson.map((s) => ({
+        id: String(s.id),
+        date: s.date ? String(s.date).split('T')[0] : null,
+        tourId: String(s.tour_id),
+        clientId: String(s.client_id),
+        quantity: s.quantity || 1,
+        services: s.services || [],
+      }));
+
+      const mappedManagers = managersJson.map((m) => ({
+        id: String(m.id),
+        name: m.name,
+        email: m.email || '',
+        phone: m.phone || '',
+        status: m.status || 'active',
+      }));
+
+      setState((current) => ({ ...current, clients: mappedClients, tours: mappedTours, sales: mappedSales, managers: mappedManagers }));
     } catch (e) {
+      // silent fallback to stored or mock data
     }
   };
 
@@ -220,28 +240,70 @@ export const AppProvider = ({ children }) => {
           })),
           sales: current.sales.filter((sale) => sale.tourId !== tourId),
         })),
-      addManager: (manager) =>
-        setState((current) => ({
-          ...current,
-          managers: [
-            ...current.managers,
-            {
-              id: nextId('m', current.managers),
-              status: 'active',
-              ...manager,
-            },
-          ],
-        })),
-      updateManager: (managerId, manager) =>
-        setState((current) => ({
-          ...current,
-          managers: current.managers.map((m) => (m.id === managerId ? { ...m, ...manager } : m)),
-        })),
-      removeManager: (managerId) =>
-        setState((current) => ({
-          ...current,
-          managers: current.managers.filter((manager) => manager.id !== managerId),
-        })),
+      addManager: (manager) => {
+        (async () => {
+          try {
+            const base = 'http://127.0.0.1:8000';
+            const res = await fetch(`${base}/api/managers`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password }),
+            });
+            if (!res.ok) throw new Error('Failed to create manager');
+            const created = await res.json();
+            const mapped = { id: String(created.id), name: created.name, email: created.email || '', phone: created.phone || '', status: created.status || 'active' };
+            setState((current) => ({ ...current, managers: [...current.managers, mapped] }));
+            return;
+          } catch (e) {
+            // fallback to local-only behavior
+            setState((current) => ({
+              ...current,
+              managers: [
+                ...current.managers,
+                {
+                  id: nextId('m', current.managers),
+                  status: 'active',
+                  ...manager,
+                },
+              ],
+            }));
+          }
+        })();
+      },
+      updateManager: (managerId, manager) => {
+        (async () => {
+          try {
+            const base = 'http://127.0.0.1:8000';
+            const res = await fetch(`${base}/api/managers/${managerId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: manager.name, email: manager.email, phone: manager.phone, password: manager.password }),
+            });
+            if (!res.ok) throw new Error('Failed to update manager');
+            const updated = await res.json();
+            const mapped = { id: String(updated.id), name: updated.name, email: updated.email || '', phone: updated.phone || '', status: updated.status || 'active' };
+            setState((current) => ({ ...current, managers: current.managers.map((m) => (m.id === String(mapped.id) ? { ...m, ...mapped } : m)) }));
+            return;
+          } catch (e) {
+            // fallback to local update
+            setState((current) => ({ ...current, managers: current.managers.map((m) => (m.id === managerId ? { ...m, ...manager } : m)) }));
+          }
+        })();
+      },
+      removeManager: (managerId) => {
+        (async () => {
+          try {
+            const base = 'http://127.0.0.1:8000';
+            const res = await fetch(`${base}/api/managers/${managerId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete manager');
+            setState((current) => ({ ...current, managers: current.managers.filter((manager) => manager.id !== managerId) }));
+            return;
+          } catch (e) {
+            // fallback to local removal
+            setState((current) => ({ ...current, managers: current.managers.filter((manager) => manager.id !== managerId) }));
+          }
+        })();
+      },
     }),
     [],
   );
