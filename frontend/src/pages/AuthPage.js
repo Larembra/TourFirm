@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
 const AuthPage = ({ onLogin }) => {
-  const [form, setForm] = useState({ login: '', password: '', name: '', email: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
 
   const submit = (event) => {
     event.preventDefault();
-    onLogin();
+    onLogin(form.email, form.password);
   };
 
   const handleChange = (event) => {
@@ -23,18 +23,18 @@ const AuthPage = ({ onLogin }) => {
 
             <div className="auth-row">
               <label htmlFor="email" className="field-label">Email</label>
-              <input id="email" name="email" value={form.email} onChange={handleChange} placeholder="Любой email" />
+              <input id="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" />
             </div>
 
             <div className="auth-row">
               <label htmlFor="password" className="field-label">Пароль</label>
               <input
-                  id="password"
+                    id="password"
                   type="password"
                   name="password"
                   value={form.password}
                   onChange={handleChange}
-                  placeholder="Любой пароль"
+                    placeholder="Пароль"
               />
             </div>
 

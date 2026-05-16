@@ -273,34 +273,36 @@ const ToursPage = ({
         <div className="tour-grid" style={{ marginTop: 12 }}>
           {visibleTours.map((tour) => (
             <div key={tour.id} className="tour-card" style={{ position: 'relative', paddingTop: 32 }}>
-              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
-                <button
-                  onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); openEditModal(tour); }}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  title="Редактировать"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={async (ev) => {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                    if (!window.confirm('Удалить путёвку?')) return;
-                    try {
-                      const res = await fetch(`http://127.0.0.1:8000/api/tours/${tour.id}`, { method: 'DELETE' });
-                      if (!res.ok) throw new Error('Delete failed');
-                      app.reloadData();
-                    } catch (err) {
-                      console.error(err);
-                      window.alert('Не удалось удалить путёвку');
-                    }
-                  }}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  title="Удалить"
-                >
-                  🗑️
-                </button>
-              </div>
+              {canEdit ? (
+                <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={(ev) => { ev.stopPropagation(); ev.preventDefault(); openEditModal(tour); }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+                    title="Редактировать"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={async (ev) => {
+                      ev.stopPropagation();
+                      ev.preventDefault();
+                      if (!window.confirm('Удалить путёвку?')) return;
+                      try {
+                        const res = await fetch(`http://127.0.0.1:8000/api/tours/${tour.id}`, { method: 'DELETE' });
+                        if (!res.ok) throw new Error('Delete failed');
+                        app.reloadData();
+                      } catch (err) {
+                        console.error(err);
+                        window.alert('Не удалось удалить путёвку');
+                      }
+                    }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+                    title="Удалить"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ) : null}
               <Link to={`/tours/${tour.id}`}>
                 {tour.images && tour.images.length > 0 ? (
                   <img src={tour.images[0].url} alt={tour.title} style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8 }} />
