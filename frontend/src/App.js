@@ -27,7 +27,8 @@ const AppShell = () => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    app.signInAsLeader();
+    // handled by AuthPage: app.signIn(email,password) will set currentUser
+    // keep a lightweight handler that navigates to profile after login
     navigate('/profile');
   };
 
@@ -59,7 +60,7 @@ const AppShell = () => {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<HomePage onAuth={() => navigate('/auth')} />} />
-          <Route path="/auth" element={<AuthPage onLogin={handleLogin} />} />
+          <Route path="/auth" element={<AuthPage onLogin={async (email, password) => { try { await app.signIn(email, password); navigate('/profile'); } catch (e) { window.alert('Неверный email или пароль'); } }} />} />
           <Route
             path="/clients"
             element={

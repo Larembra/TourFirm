@@ -138,6 +138,30 @@ export const AppProvider = ({ children }) => {
   const actions = useMemo(
     () => ({
       signInAsLeader: () => setState((current) => ({ ...current, currentUser: demoUser })),
+      signIn: async (email, password) => {
+        try {
+          const base = 'http://127.0.0.1:8000';
+          const res = await fetch(`${base}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          if (!res.ok) throw new Error('Auth failed');
+          const user = await res.json();
+          const mapped = {
+            id: String(user.id),
+            name: user.name,
+            email: user.email || '',
+            role: user.role || 'manager',
+            position: user.role === 'leader' ? 'Руководитель' : 'Менеджер',
+          };
+          setState((current) => ({ ...current, currentUser: mapped }));
+          return mapped;
+        } catch (e) {
+          console.error('Sign in failed', e);
+          throw e;
+        }
+      },
       signOut: () => setState((current) => ({ ...current, currentUser: null })),
       // reset demo data from initial mock (useful when mockData.js was changed)
       resetDemoData: () =>

@@ -14,7 +14,14 @@ const tabs = [
 const Navigation = ({ activePage, user, onNavigate, onLogout, onAuth }) => {
   const isGuest = !user;
 
-  const visibleTabs = isGuest ? tabs.filter((t) => !t.authRequired) : tabs;
+  // hide some tabs from regular managers
+  const visibleTabs = (() => {
+    if (isGuest) return tabs.filter((t) => !t.authRequired);
+    if (user.role === 'manager') {
+      return tabs.filter((t) => !['sales', 'managers', 'reports'].includes(t.key));
+    }
+    return tabs;
+  })();
 
   return (
     <header className="topbar">

@@ -9,6 +9,22 @@ from fastapi.responses import JSONResponse
 router = APIRouter()
 
 
+@router.post('/auth/login')
+def login(payload: dict, db: Session = Depends(get_db)):
+    """Simple email/password authentication against employees table.
+    Expects JSON {"email": "...", "password": "..."} and returns employee data on success.
+    """
+    email = payload.get('email')
+    password = payload.get('password')
+    if not email or not password:
+        raise HTTPException(status_code=400, detail='Email and password required')
+    emp = db.query(models.Employee).filter(models.Employee.email == email).first()
+    if not emp or emp.password != password:
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    # return basic employee info
+    return {'id': emp.id, 'name': emp.name, 'email': emp.email, 'phone': emp.phone, 'role': emp.role}
+
+
 @router.get('/managers', response_model=list[schemas.ManagerRead])
 @router.get('/employees', response_model=list[schemas.ManagerRead])
 def list_managers(db: Session = Depends(get_db)):
