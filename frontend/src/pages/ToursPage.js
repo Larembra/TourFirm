@@ -88,7 +88,7 @@ const ToursPage = ({
         if (editingId) {
           const res = await fetch(`${base}/api/tours/${editingId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(app.token ? { Authorization: `Bearer ${app.token}` } : {}) },
             body: JSON.stringify(body),
           });
           if (!res.ok) throw new Error('Failed to update tour');
@@ -96,7 +96,7 @@ const ToursPage = ({
         } else {
           const res = await fetch(`${base}/api/tours`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(app.token ? { Authorization: `Bearer ${app.token}` } : {}) },
             body: JSON.stringify(body),
           });
           if (!res.ok) throw new Error('Failed to create tour');
