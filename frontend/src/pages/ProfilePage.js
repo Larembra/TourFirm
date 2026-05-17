@@ -13,7 +13,7 @@ const ProfilePage = () => {
         : currentUser.photo.startsWith('/static/')
           ? `http://127.0.0.1:8000${currentUser.photo}`
           : `http://127.0.0.1:8000/${currentUser.photo.replace(/^\//, '')}`)
-    : '/logo192.png';
+    : '/userIcon.png';
 
   useEffect(() => {
     if (currentUser) {
@@ -64,7 +64,7 @@ const ProfilePage = () => {
     <section className="page-shell">
       <article className={`panel full-width-panel ${editMode ? 'editing' : ''}`} style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
         <div style={{ width: 200, height: 200, borderRadius: 16, overflow: 'hidden', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src={photoPreview ?? resolvedPhoto} alt="Фото" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = '/logo192.png'; }} />
+          <img src={photoPreview ?? resolvedPhoto} alt="Фото" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = '/userIcon.png'; }} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
