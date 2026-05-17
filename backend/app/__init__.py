@@ -1,4 +1,1 @@
-
-
-from .main import app
-
+"""TourFirm backend package."""
