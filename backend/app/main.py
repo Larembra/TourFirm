@@ -9,8 +9,9 @@ import os
 from passlib.context import CryptContext
 
 
-# create tables
-Base.metadata.create_all(bind=engine)
+# create tables (skip automatic create during tests)
+if os.environ.get('TESTING') != '1':
+    Base.metadata.create_all(bind=engine)
 
 # password hashing for seed
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -154,7 +155,9 @@ app.add_middleware(
 
 @app.on_event('startup')
 def on_startup():
-
+    # during tests we prefer to control DB setup in conftest
+    if os.environ.get('TESTING') == '1':
+        return
     try:
         migrate_clients_column()
         migrate_employee_photo_column()
