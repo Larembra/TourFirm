@@ -63,7 +63,7 @@ const ProfilePage = () => {
   return (
     <section className="page-shell">
       <article className={`panel full-width-panel ${editMode ? 'editing' : ''}`} style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-        <div style={{ width: 120, height: 120, borderRadius: 16, overflow: 'hidden', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 200, height: 200, borderRadius: 16, overflow: 'hidden', background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img src={photoPreview ?? resolvedPhoto} alt="Фото" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = '/logo192.png'; }} />
         </div>
         <div style={{ flex: 1 }}>
