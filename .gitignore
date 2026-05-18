@@ -16,6 +16,7 @@ coverage.xml
 *.db
 .env
 .env.*
+!.env.example
 node_modules/
 frontend/node_modules/
 frontend/build/
