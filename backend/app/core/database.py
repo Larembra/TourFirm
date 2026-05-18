@@ -6,8 +6,13 @@ from dotenv import load_dotenv
 import urllib.parse
 
 # Попытка загрузить .env из папки backend (расположение: backend/.env)
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
-load_dotenv(env_path)
+env_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+env_path = os.path.join(env_dir, '.env')
+example_env_path = os.path.join(env_dir, '.env.example')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+elif os.path.exists(example_env_path):
+    load_dotenv(example_env_path)
 
 # Поддерживаем как единый DATABASE_URL, так и отдельные переменные DB_*
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -26,6 +31,7 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
