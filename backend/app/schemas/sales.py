@@ -17,6 +17,7 @@ class SaleCreate(SaleBase):
 class SaleRead(SaleBase):
     id: int
     date: Optional[datetime]
+    employee_id: Optional[int] = None
     services: List[ServiceRead] = []
 
     class Config:
