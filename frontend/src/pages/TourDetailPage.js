@@ -140,7 +140,10 @@ const TourDetailPage = () => {
                       try {
                         const res = await fetch('http://127.0.0.1:8000/api/sales', {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: {
+                            'Content-Type': 'application/json',
+                            ...(app.token ? { Authorization: `Bearer ${app.token}` } : {}),
+                          },
                           body: JSON.stringify({ tour_id: Number(tour.id), client_id: Number(client.id), quantity: 1, service_ids: selectedServiceIds.map(id => Number(id)) }),
                         });
                         if (!res.ok) {

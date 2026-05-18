@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 
-def test_create_sale(client, db_session):
+def test_create_sale(client, db_session, manager_token):
     from app.models import Tour, Client
 
     # create tour and client
@@ -13,9 +13,9 @@ def test_create_sale(client, db_session):
     db_session.refresh(c)
 
     payload = {'tour_id': t.id, 'client_id': c.id, 'quantity': 1}
-    res = client.post('/api/sales', json=payload)
+    res = client.post('/api/sales', json=payload, headers={'Authorization': f'Bearer {manager_token}'})
     assert res.status_code == HTTPStatus.OK
     data = res.json()
     assert data['tour_id'] == t.id
     assert data['client_id'] == c.id
-
+    assert data.get('employee_id') is not None

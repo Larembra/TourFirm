@@ -12,9 +12,11 @@ class Sale(Base):
     date = Column(DateTime(timezone=True), server_default=func.now())
     tour_id = Column(Integer, ForeignKey('tours.id'))
     client_id = Column(Integer, ForeignKey('clients.id'))
+    employee_id = Column(Integer, ForeignKey('employees.id'), nullable=True)
     quantity = Column(Integer, default=1)
 
     tour = relationship('Tour')
     client = relationship('Client')
+    employee = relationship('Employee')
     services = relationship('Service', secondary=sale_services)
 

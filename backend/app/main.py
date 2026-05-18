@@ -81,9 +81,10 @@ def seed_data():
 
             tours_db = db.query(Tour).limit(3).all()
             clients_db = db.query(Client).limit(3).all()
+            employee = db.query(Employee).first()
             sales = []
             for i in range(min(len(tours_db), len(clients_db))):
-                sales.append(Sale(tour_id=tours_db[i].id, client_id=clients_db[i].id, quantity=1 + i))
+                sales.append(Sale(tour_id=tours_db[i].id, client_id=clients_db[i].id, quantity=1 + i, employee_id=employee.id if employee else None))
             if sales:
                 db.add_all(sales)
                 db.commit()
@@ -137,6 +138,25 @@ def migrate_employee_photo_column():
         conn.execute(text("ALTER TABLE employees ADD COLUMN photo VARCHAR"))
 
 
+def migrate_sales_employee_column():
+    inspector = inspect(engine)
+    try:
+        cols = [c['name'] for c in inspector.get_columns('sales')]
+    except Exception:
+        return
+    if 'employee_id' in cols:
+        return
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE sales ADD COLUMN employee_id INTEGER"))
+        try:
+            result = conn.execute(text("SELECT id FROM employees ORDER BY id LIMIT 1"))
+            row = result.first()
+            if row and row[0] is not None:
+                conn.execute(text("UPDATE sales SET employee_id = :emp_id WHERE employee_id IS NULL"), {"emp_id": row[0]})
+        except Exception:
+            pass
+
+
 app = FastAPI(title='Tourfirm API')
 
 # mount static files
@@ -161,6 +181,7 @@ def on_startup():
     try:
         migrate_clients_column()
         migrate_employee_photo_column()
+        migrate_sales_employee_column()
         seed_data()
     except Exception:
 
@@ -173,4 +194,3 @@ def root():
 
 
 app.include_router(api_router, prefix='/api')
-
