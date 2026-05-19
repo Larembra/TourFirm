@@ -11,7 +11,6 @@ const emptyTour = {
   startDate: '',
   endDate: '',
   description: '',
-  excursions: '',
   services: [],
   seats: 10,
 };
@@ -57,7 +56,6 @@ const ToursPage = ({
       startDate: tour.startDate || '',
       endDate: tour.endDate || '',
       description: tour.description || '',
-      excursions: (tour.excursions || []).join(', '),
       services: (tour.services || []).map((s) => ({ name: s.name, cost: s.cost || 0 })),
       seats: tour.seats || 0,
     });
@@ -199,7 +197,6 @@ const ToursPage = ({
       ...form,
       price: Number(form.price) || 0,
       seats: Number(form.seats) || 0,
-      excursions: parseListField(form.excursions),
       services: parseListField(form.services),
       assignedClientIds: [],
     });
@@ -366,10 +363,6 @@ const ToursPage = ({
               <label className="full-width">
                 Описание
                 <textarea rows="3" value={modalForm.description} onChange={(e) => setModalForm((c) => ({ ...c, description: e.target.value }))} />
-              </label>
-              <label className="full-width">
-                Экскурсии через запятую
-                <input value={modalForm.excursions} onChange={(e) => setModalForm((c) => ({ ...c, excursions: e.target.value }))} placeholder="Музеи, прогулки, дегустация" />
               </label>
                           <div className="full-width">
                             <label>Услуги</label>

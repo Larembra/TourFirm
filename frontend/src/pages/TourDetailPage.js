@@ -50,16 +50,6 @@ const TourDetailPage = () => {
               <h3 style={{ marginTop: 8 }}>{tour.title}</h3>
               <p className="muted-text">{tour.description}</p>
             </div>
-            <div className="section-block" style={{ marginTop: 16 }}>
-              <h4>Экскурсии</h4>
-              <ul className="bullet-list">
-                {tour.excursions && tour.excursions.length > 0 ? (
-                  tour.excursions.map((item) => <li key={item}>{item}</li>)
-                ) : (
-                  <p className="muted-text">Нет экскурсий.</p>
-                )}
-              </ul>
-            </div>
           </div>
 
           <div className="panel" style={{ flex: 1, padding: 16 }}>
