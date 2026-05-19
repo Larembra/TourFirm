@@ -13,6 +13,13 @@
 - базовый набор тестов для backend (pytest).
 
 Быстрый старт — бэкенд
+0. Склонируйте репозиторий и перейдите в папку проекта:
+
+```powershell
+git clone https://github.com/Larembra/TourFirm
+cd tourFirm
+```
+
 1. Перейдите в папку `backend`, создайте виртуальное окружение и установите зависимости:
 
 ```powershell
@@ -22,7 +29,13 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-2. Создайте `.env` в папке `backend` с параметрами подключения к БД (пример):
+2. Создайте `.env` в папке `backend` с параметрами подключения к БД. Можно скопировать шаблон `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Пример содержимого:
 
 ```text
 DB_HOST=localhost
@@ -32,6 +45,8 @@ DB_USER=postgres
 DB_PASS=postgres
 # или DATABASE_URL=postgresql://user:pass@host:port/dbname
 ```
+
+Если `.env` отсутствует, приложение попробует использовать `backend/.env.example`.
 
 3. Запустите сервер:
 
@@ -54,7 +69,3 @@ npm start
 
 Тесты
 - Backend: `cd backend && pytest -q` — тесты используют in-memory SQLite и не трогают вашу основную БД.
-
-
-
-
