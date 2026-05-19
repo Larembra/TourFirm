@@ -354,7 +354,7 @@ const ClientsPage = ({ clients, tours, currentUser, onCreateClient }) => {
                 </div>
                 {/* discount is assigned automatically based on history; managers cannot set it here */}
 
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'center', gridColumn: '1 / -1' }}>
                   <button type="button" className="secondary-button" onClick={handleModalClose}>
                     Отмена
                   </button>
